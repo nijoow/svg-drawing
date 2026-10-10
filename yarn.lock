@@ -2917,6 +2917,7 @@ __metadata:
     eslint-config-prettier: ^8.8.0
     eslint-plugin-prettier: ^4.2.1
     next: 13.4.7
+    paper: 0.12.18
     postcss: 8.4.24
     prettier: ^2.8.8
     react: 18.2.0
@@ -3173,6 +3174,13 @@ __metadata:
   dependencies:
     aggregate-error: ^3.0.0
   checksum: cb0ab21ec0f32ddffd31dfc250e3afa61e103ef43d957cc45497afe37513634589316de4eb88abdfd969fe6410c22c0b93ab24328833b8eb1ccc087fc0442a1c
+  languageName: node
+  linkType: hard
+
+"paper@npm:0.12.18":
+  version: 0.12.18
+  resolution: "paper@npm:0.12.18"
+  checksum: b535b577cf34a7ed1877c05592ecd8a7ac47d9642c094600c04c4cb39e351ce1308be512be68dbe7dc7c1d0d93f0e91204bf2cb454cdd58175ec31a52f05c65f
   languageName: node
   linkType: hard
 

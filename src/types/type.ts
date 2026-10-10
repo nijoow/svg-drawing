@@ -1,7 +1,7 @@
-export type ModeType = 'SELECT' | 'PENCIL' | 'VERTEX' | 'SHAPE' | 'TEXT'
+export type ModeType = 'SELECT' | 'PENCIL' | 'VERTEX' | 'SHAPE' | 'TEXT' | 'HAND'
 type ModeSubType = 'SHAPE' | 'VERTEX' | 'RECTANGLE' | 'ELLIPSE' | 'TRIANGLE'
 type Option = 'FILL' | 'STROKE' | 'STORKE_WIDTH' | 'OPACITY' | null
-export type DrawingType = 'POLYGON' | 'PATH' | 'ELLIPSE' | 'SPLINE' | 'TEXT'
+export type DrawingType = 'POLYGON' | 'PATH' | 'ELLIPSE' | 'SPLINE' | 'TEXT' | 'IMAGE'
 type DrawingSubType = 'POLYGON' | 'RECT' | 'CIRCLE' | 'TEXT' | 'LINE' | 'PATH'
 
 export type Direction = 'TL' | 'T' | 'TR' | 'L' | 'R' | 'BL' | 'B' | 'BR' | null
@@ -70,4 +70,43 @@ export interface Drawing {
   stroke: string
   strokeWidth: number
   opacity: number
+  name?: string
+  hidden?: boolean
+  locked?: boolean
+  groupId?: string
+  artboardId?: string
+  subpaths?: Vertex[][]
+  gradient?: {
+    type: 'linear' | 'radial'
+    angle: number
+    stops: { offset: number; color: string }[]
+  }
+  clip?: { vertexs: Vertex[]; subpaths?: Vertex[][] }
+  blendMode?: 'normal' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten'
+  effects?: {
+    brightness: number
+    contrast: number
+    saturation: number
+    grayscale: number
+    blur: number
+    hue: number
+  }
+  text?: {
+    content: string
+    fontFamily: string
+    fontSize: number
+    fontWeight: number
+    fontStyle: 'normal' | 'italic'
+    align: 'left' | 'center' | 'right'
+    lineHeight: number
+    letterSpacing: number
+    naturalWidth: number
+    naturalHeight: number
+  }
+  image?: {
+    src: string
+    naturalWidth: number
+    naturalHeight: number
+    crop: { x: number; y: number; width: number; height: number }
+  }
 }

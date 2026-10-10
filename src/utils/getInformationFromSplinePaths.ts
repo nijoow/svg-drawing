@@ -1,3 +1,5 @@
+import { getInformationFromVertexs } from './getInformationFromVertex'
+
 type SplinePoint = { x: number; y: number }
 
 type ControlPoints = {
@@ -35,11 +37,7 @@ const controlPoint = (controlPoints: ControlPoints): [number, number] => {
   return [x, y]
 }
 
-export const bezierCommand = (
-  point: SplinePoint,
-  i: number,
-  a: SplinePoint[],
-): string => {
+export const bezierCommand = (point: SplinePoint, i: number, a: SplinePoint[]): string => {
   let cpsX: number
   let cpsY: number
 
@@ -74,19 +72,8 @@ export const bezierCommand = (
 }
 
 export const getSvgInformationFromPath = (paths: SplinePoint[]) => {
-  const xValues = paths.map(({ x }) => x)
-  const yValues = paths.map(({ y }) => y)
-  const xMin = Math.min(...xValues) - 20
-  const yMin = Math.min(...yValues) - 20
-  const xMax = Math.max(...xValues) + 20
-  const yMax = Math.max(...yValues) + 20
-  const width = xMax - xMin
-  const height = yMax - yMin
-
-  const center = { x: (xMax + xMin) / 2, y: (yMax + yMin) / 2 }
-  return {
-    center,
-    width,
-    height,
-  }
+  const finitePaths = paths.filter((point) => Number.isFinite(point.x) && Number.isFinite(point.y))
+  const bounds = getInformationFromVertexs(finitePaths)
+  if (finitePaths.length === 0) return bounds
+  return { ...bounds, width: bounds.width + 40, height: bounds.height + 40 }
 }

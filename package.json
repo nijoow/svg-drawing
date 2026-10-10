@@ -7,8 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "prettier:check": "prettier --check --ignore-path .gitignore .",
-    "prettier:write": "prettier --write --ignore-path .gitignore ."
+    "typecheck": "tsc --noEmit --incremental false",
+    "test": "node --require ./tests/register.cjs --test tests/*.test.cjs",
+    "prettier:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"tests/**/*.cjs\" \"*.{js,json,md}\"",
+    "prettier:write": "prettier --write \"src/**/*.{ts,tsx,css}\" \"tests/**/*.cjs\" \"*.{js,json,md}\""
   },
   "dependencies": {
     "@types/node": "20.3.1",
@@ -20,6 +22,7 @@
     "eslint": "8.43.0",
     "eslint-config-next": "13.4.7",
     "next": "13.4.7",
+    "paper": "0.12.18",
     "postcss": "8.4.24",
     "react": "18.2.0",
     "react-color": "^2.19.3",

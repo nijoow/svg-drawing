@@ -1,19 +1,19 @@
-export const getInformationFromVertexs = (
-  vertexs: { x: number; y: number; id: string }[],
-) => {
-  const width =
-    Math.max(...vertexs.map((v) => v.x)) - Math.min(...vertexs.map((v) => v.x))
-  const height =
-    Math.max(...vertexs.map((v) => v.y)) - Math.min(...vertexs.map((v) => v.y))
-  const center = {
-    x:
-      (Math.max(...vertexs.map((v) => v.x)) +
-        Math.min(...vertexs.map((v) => v.x))) /
-      2,
-    y:
-      (Math.max(...vertexs.map((v) => v.y)) +
-        Math.min(...vertexs.map((v) => v.y))) /
-      2,
+export const getInformationFromVertexs = (vertexs: { x: number; y: number }[]) => {
+  let minX = Infinity
+  let minY = Infinity
+  let maxX = -Infinity
+  let maxY = -Infinity
+  for (const vertex of vertexs) {
+    if (!Number.isFinite(vertex.x) || !Number.isFinite(vertex.y)) continue
+    minX = Math.min(minX, vertex.x)
+    minY = Math.min(minY, vertex.y)
+    maxX = Math.max(maxX, vertex.x)
+    maxY = Math.max(maxY, vertex.y)
   }
-  return { width, height, center }
+  if (minX === Infinity) return { width: 0, height: 0, center: { x: 0, y: 0 } }
+  return {
+    width: maxX - minX,
+    height: maxY - minY,
+    center: { x: (maxX + minX) / 2, y: (maxY + minY) / 2 },
+  }
 }

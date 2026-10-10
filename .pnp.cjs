@@ -39,6 +39,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["eslint-config-prettier", "virtual:e95be3c5cc26dd4802ef379951c92eb96c013e298d5b099fa64d9c689a2a8396b833e04eef888318977b115b3aa3f3be2bb043a9b5cae98ec59ea03cbfbb2c9f#npm:8.8.0"],\
             ["eslint-plugin-prettier", "virtual:e95be3c5cc26dd4802ef379951c92eb96c013e298d5b099fa64d9c689a2a8396b833e04eef888318977b115b3aa3f3be2bb043a9b5cae98ec59ea03cbfbb2c9f#npm:4.2.1"],\
             ["next", "virtual:e95be3c5cc26dd4802ef379951c92eb96c013e298d5b099fa64d9c689a2a8396b833e04eef888318977b115b3aa3f3be2bb043a9b5cae98ec59ea03cbfbb2c9f#npm:13.4.7"],\
+            ["paper", "npm:0.12.18"],\
             ["postcss", "npm:8.4.24"],\
             ["prettier", "npm:2.8.8"],\
             ["react", "npm:18.2.0"],\
@@ -3560,6 +3561,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["eslint-config-prettier", "virtual:e95be3c5cc26dd4802ef379951c92eb96c013e298d5b099fa64d9c689a2a8396b833e04eef888318977b115b3aa3f3be2bb043a9b5cae98ec59ea03cbfbb2c9f#npm:8.8.0"],\
             ["eslint-plugin-prettier", "virtual:e95be3c5cc26dd4802ef379951c92eb96c013e298d5b099fa64d9c689a2a8396b833e04eef888318977b115b3aa3f3be2bb043a9b5cae98ec59ea03cbfbb2c9f#npm:4.2.1"],\
             ["next", "virtual:e95be3c5cc26dd4802ef379951c92eb96c013e298d5b099fa64d9c689a2a8396b833e04eef888318977b115b3aa3f3be2bb043a9b5cae98ec59ea03cbfbb2c9f#npm:13.4.7"],\
+            ["paper", "npm:0.12.18"],\
             ["postcss", "npm:8.4.24"],\
             ["prettier", "npm:2.8.8"],\
             ["react", "npm:18.2.0"],\
@@ -3840,6 +3842,15 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageDependencies": [\
             ["p-map", "npm:4.0.0"],\
             ["aggregate-error", "npm:3.1.0"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["paper", [\
+        ["npm:0.12.18", {\
+          "packageLocation": "./.yarn/cache/paper-npm-0.12.18-4b430cc5fc-b535b577cf.zip/node_modules/paper/",\
+          "packageDependencies": [\
+            ["paper", "npm:0.12.18"]\
           ],\
           "linkType": "HARD"\
         }]\
