@@ -1,374 +1,215 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
-import { useRecoilState, useRecoilValue } from 'recoil'
-import {
-  currentOptionsState,
-  drawingsAtom,
-  modeAtom,
-  selectedDrawingIdAtom,
-  selectedDrawingState,
-} from '@/recoil/atoms'
+import { useEffect, useRef, useState } from 'react'
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
+import { documentState, editorErrorState, gridAtom, modeAtom, selectedDrawingsState, snapAtom } from '@/recoil/atoms'
 import SideToolBar from '@/components/ToolBar/SideToolBar'
-import { Drawing, DrawingType, ModeType, Point, Vertex } from '@/types/type'
-import { v4 as uuid } from 'uuid'
-import { getHeightFromPoint, getLeftFromPoint, getTopFromPoint, getWidthFromPoint } from '@/utils/getValueFromPoint'
 import TopToolBar from '@/components/ToolBar/TopToolBar'
-import Handler from '@/components/Handler/Handler'
-import { getInformationFromVertexs } from '@/utils/getInformationFromVertex'
-import Path from '@/components/Drawings/Path'
-import VertexHandler from '@/components/Handler/VertexHandler'
-import { bezierCommand, getSvgInformationFromPath } from '@/utils/getInformationFromSplinePaths'
-import Spline from '@/components/Drawings/Spline'
-
-const defaultPoint = {
-  startX: undefined,
-  startY: undefined,
-  endX: undefined,
-  endY: undefined,
-}
-
-const dragBoxVisibleMode: Array<ModeType | null> = ['SELECT', 'SHAPE', 'VERTEX', 'TEXT']
+import DocumentToolBar from '@/components/ToolBar/DocumentToolBar'
+import WorkspaceToolBar from '@/components/ToolBar/WorkspaceToolBar'
+import VectorToolBar from '@/components/ToolBar/VectorToolBar'
+import VertexToolBar from '@/components/ToolBar/VertexToolBar'
+import LayersPanel from '@/components/Panels/LayersPanel'
+import PropertiesPanel from '@/components/Panels/PropertiesPanel'
+import ArtboardsPanel from '@/components/Panels/ArtboardsPanel'
+import MediaProperties from '@/components/Panels/MediaProperties'
+import DrawingCanvas from '@/components/Canvas/DrawingCanvas'
+import { useViewport } from '@/hooks/useViewport'
+import { useEditorActions } from '@/editor/useEditorActions'
+import { getViewBounds } from '@/editor/viewBounds'
+import { useEditorKeyboard } from '@/hooks/useEditorKeyboard'
+import { importImageFile } from '@/media/image'
+import { appendImportedSvg, importSvg } from '@/vector/importSvg'
+import type { Position } from '@/drawing/creation'
 
 export default function Home() {
-  //recoil
+  const document = useRecoilValue(documentState)
   const [mode, setMode] = useRecoilState(modeAtom)
-  const currentOptions = useRecoilValue(currentOptionsState)
-  const [, setSelectedDrawingId] = useRecoilState(selectedDrawingIdAtom)
-  const [drawings, setDrawings] = useRecoilState(drawingsAtom)
-  const selectedDrawing = useRecoilValue(selectedDrawingState)
+  const selection = useRecoilValue(selectedDrawingsState)
+  const [grid, setGrid] = useRecoilState(gridAtom)
+  const [snap, setSnap] = useRecoilState(snapAtom)
+  const setError = useSetRecoilState(editorErrorState)
+  const actions = useEditorActions()
+  const { viewport, setViewport, screenToDocument, zoomAt, fitToDrawing } = useViewport()
+  const [panel, setPanel] = useState<'Layers' | 'Properties' | 'Artboards' | null>(null)
+  const [importing, setImporting] = useState(false)
+  const fileInput = useRef<HTMLInputElement>(null)
+  const currentDocumentId = useRef(document.id)
+  currentDocumentId.current = document.id
+  const spacePressed = useEditorKeyboard()
 
-  //useState
-  const [point, setPoint] = useState<Point>(defaultPoint)
-  const [vertexs, setVertexs] = useState<Vertex[]>([])
-  const [spline, setSpline] = useState<Vertex[]>([])
-
-  //useRef
-  const isDragged = useRef(false)
-
-  //constant
-  const vertexsLastIndex = vertexs.length - 1
-
-  // useEffect
   useEffect(() => {
-    if (mode.type !== 'VERTEX') {
-      setVertexs([])
-    }
-  }, [mode])
+    if (window.innerWidth > 1100) setPanel('Layers')
+  }, [])
 
-  //function
-  const handleMouseDown = (event: React.MouseEvent) => {
-    if (!selectedDrawing?.id && event.target instanceof SVGElement) {
-      setSelectedDrawingId(event.target.id)
-    } else {
-      setSelectedDrawingId(null)
-    }
-    isDragged.current = true
-    setPoint({ ...point, startX: event.clientX, startY: event.clientY })
+  const fit = () => {
+    fitToDrawing(getViewBounds(document), window.innerWidth - (panel ? 280 : 0), window.innerHeight)
   }
 
-  const handleMouseMove = (event: React.MouseEvent | MouseEvent) => {
-    if (!isDragged.current) return
-    setPoint({
-      ...point,
-      endX: event.clientX,
-      endY: event.clientY,
-    })
-  }
-
-  const handleMouseUp = (event: React.MouseEvent | MouseEvent) => {
-    if (!isDragged.current) return
-
-    isDragged.current = false
-    if (mode.type === 'SHAPE' && mode.subType && point.startX && point.startY && point.endX && point.endY) {
-      const centerX = (point.startX + point.endX) / 2
-      const centerY = (point.startY + point.endY) / 2
-      const width = Math.abs(point.endX - point.startX)
-      const height = Math.abs(point.endY - point.startY)
-      const shapeVertexs: { [key: string]: Vertex[] } = {
-        RECTANGLE: [
-          { type: 'L', x: point.startX, y: point.startY, id: uuid() },
-          { type: 'L', x: point.startX, y: point.endY, id: uuid() },
-          { type: 'L', x: point.endX, y: point.endY, id: uuid() },
-          { type: 'L', x: point.endX, y: point.startY, id: uuid() },
-        ],
-        TRIANGLE: [
-          { type: 'L', x: centerX, y: point.startY, id: uuid() },
-          { type: 'L', x: point.startX, y: point.endY, id: uuid() },
-          { type: 'L', x: point.endX, y: point.endY, id: uuid() },
-        ],
-        ELLIPSE: [
-          {
-            type: 'C',
-            currentHandlerX: point.startX,
-            currentHandlerY: point.startY + height / 4,
-            nextHandlerX: point.startX,
-            nextHandlerY: point.endY - height / 4,
-            x: point.startX,
-            y: centerY,
-            id: uuid(),
-          },
-          {
-            type: 'C',
-            currentHandlerX: point.startX + width / 4,
-            currentHandlerY: point.endY,
-            nextHandlerX: point.endX - width / 4,
-            nextHandlerY: point.endY,
-            x: centerX,
-            y: point.endY,
-            id: uuid(),
-          },
-          {
-            type: 'C',
-            currentHandlerX: point.endX,
-            currentHandlerY: point.endY - height / 4,
-            nextHandlerX: point.endX,
-            nextHandlerY: point.startY + height / 4,
-            x: point.endX,
-            y: centerY,
-            id: uuid(),
-          },
-          {
-            type: 'C',
-            currentHandlerX: point.endX - width / 4,
-            currentHandlerY: point.startY,
-            nextHandlerX: point.startX + width / 4,
-            nextHandlerY: point.startY,
-            x: centerX,
-            y: point.startY,
-            id: uuid(),
-          },
-        ],
-      }
-      const drawingType: { [key: string]: DrawingType } = {
-        RECTANGLE: 'POLYGON',
-        TRIANGLE: 'POLYGON',
-        ELLIPSE: 'ELLIPSE',
-      }
-      const newId = uuid()
-      setDrawings([
-        ...drawings,
-        {
-          id: newId,
-          type: drawingType[mode.subType],
-          subType: null,
-          center: { x: centerX, y: centerY },
-          width,
-          height,
-          rotate: 0,
-          vertexs: shapeVertexs[mode.subType],
-          fill: currentOptions.fill,
-          stroke: currentOptions.stroke,
-          strokeWidth: currentOptions.strokeWidth,
-          opacity: currentOptions.opacity,
-        },
-      ])
-      setMode({ type: 'SELECT', subType: 'SHAPE' })
-      setSelectedDrawingId(newId)
-    }
-
-    setPoint(defaultPoint)
-  }
-
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (mode.type === 'VERTEX') {
-      if (event.key === 'Escape') {
-        setVertexs([])
+  const importImage = async (file: File, position?: Position) => {
+    const id = document.id
+    setImporting(true)
+    try {
+      if (file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg')) {
+        if (file.size > 10 * 1024 * 1024) throw new Error('SVG files must be smaller than 10 MB.')
+        const drawings = await importSvg(await file.text())
+        if (currentDocumentId.current !== id) return
+        actions.updateDocument(
+          (previous) => appendImportedSvg(previous, drawings),
+          drawings.map((drawing) => drawing.id),
+        )
         setMode({ type: 'SELECT', subType: 'SHAPE' })
+        setPanel('Layers')
+        return
       }
-      if (event.key === 'Enter') {
-        addDrawingByVertexs('PATH')
-      }
+      const drawing = await importImageFile(
+        file,
+        position ?? screenToDocument({ x: window.innerWidth / 2, y: window.innerHeight / 2 }),
+      )
+      if (currentDocumentId.current !== id) return
+      actions.updateDocument((previous) => ({ ...previous, drawings: [...previous.drawings, drawing] }), [drawing.id])
+      setMode({ type: 'SELECT', subType: 'SHAPE' })
+      setPanel('Properties')
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Could not import the image.')
+    } finally {
+      setImporting(false)
     }
-  }
-
-  const handleContextMenu = (event: React.MouseEvent) => {
-    event.preventDefault()
-  }
-
-  const handleMouseDownSvg = (event: React.MouseEvent) => {
-    if (event.buttons === 2) {
-      return setMode({ type: 'SELECT', subType: null })
-    }
-    setVertexs([...vertexs, { type: vertexs.length === 0 ? 'M' : 'L', x: event.clientX, y: event.clientY, id: uuid() }])
-  }
-
-  const handleMouseDownVertex = (event: React.MouseEvent, index: number) => {
-    event.stopPropagation()
-    if (index === 0) {
-      addDrawingByVertexs('POLYGON')
-    }
-  }
-
-  const addDrawingByVertexs = (type: 'PATH' | 'POLYGON') => {
-    const { width, height, center } = getInformationFromVertexs(vertexs)
-    const newId = uuid()
-
-    setDrawings([
-      ...drawings,
-      {
-        id: newId,
-        type,
-        subType: null,
-        vertexs,
-        width,
-        height,
-        center,
-        rotate: 0,
-        fill: currentOptions.fill,
-        stroke: currentOptions.stroke,
-        strokeWidth: currentOptions.strokeWidth,
-        opacity: currentOptions.opacity,
-      },
-    ])
-    setVertexs([])
-    setMode({ type: 'SELECT', subType: 'SHAPE' })
-    setSelectedDrawingId(newId)
   }
 
   return (
-    <main className="w-full h-full" onContextMenu={handleContextMenu}>
+    <main className="relative h-full w-full overflow-hidden bg-white" aria-label="Drawing editor">
+      <DrawingCanvas
+        spacePressed={spacePressed}
+        onImportImage={importImage}
+        onEditText={() => setPanel('Properties')}
+      />
+      <DocumentToolBar />
       <TopToolBar />
-      <SideToolBar />
+      <SideToolBar onImportImage={() => fileInput.current?.click()} />
+      <input
+        ref={fileInput}
+        className="hidden"
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        aria-label="Import image file"
+        onChange={(event) => {
+          const file = event.target.files?.[0]
+          event.target.value = ''
+          if (file) void importImage(file)
+        }}
+      />
       <div
-        className="z-0 w-full h-full bg-white"
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        className="panel-switcher fixed right-4 top-4 z-20 flex gap-1 rounded-lg bg-gray-600 p-1 text-xs text-white shadow-sm"
+        role="toolbar"
+        aria-label="Editor panels"
       >
-        {drawings.map((drawing: Drawing, index: number) => {
-          switch (drawing.type) {
-            case 'POLYGON':
-            case 'PATH':
-            case 'ELLIPSE':
-              return <Path key={drawing.id} drawing={drawing} />
-            case 'SPLINE':
-              return <Spline key={drawing.id} drawing={drawing} />
-            default:
-              break
-          }
-        })}
+        {(['Layers', 'Properties', 'Artboards'] as const).map((name) => (
+          <button
+            key={name}
+            type="button"
+            aria-pressed={panel === name}
+            className={`rounded px-2 py-2 ${panel === name ? 'bg-gray-500 text-sky-200' : 'hover:bg-gray-500'}`}
+            onClick={() => setPanel(panel === name ? null : name)}
+          >
+            {name}
+          </button>
+        ))}
       </div>
-      {isDragged.current && dragBoxVisibleMode.includes(mode.type) && (
-        <div
-          className="absolute border border-blue-500"
-          style={{
-            left: getLeftFromPoint(point),
-            top: getTopFromPoint(point),
-            width: getWidthFromPoint(point),
-            height: getHeightFromPoint(point),
-            pointerEvents: 'none',
-          }}
-        ></div>
-      )}
-      {mode.type === 'VERTEX' && (
-        <svg
-          viewBox={`0 0 ${window.innerWidth} ${window.innerHeight}`}
-          width={window.innerWidth}
-          height={window.innerHeight}
-          tabIndex={0}
-          onMouseDown={(event) => handleMouseDownSvg(event)}
-          onKeyDown={handleKeyDown}
-          className="absolute top-0 left-0"
+      {panel && (
+        <aside
+          aria-label={`${panel} panel`}
+          className="editor-panel fixed right-4 top-16 z-20 max-h-[calc(100%-10rem)] w-[264px] overflow-y-auto rounded-xl border border-gray-500 bg-gray-600/95 p-3 text-sm text-white shadow-lg backdrop-blur"
         >
-          {vertexs.length > 1 && (
-            <path
-              d={
-                `M ${vertexs[vertexsLastIndex].x} ${vertexs[vertexsLastIndex].y}` +
-                vertexs
-                  .map((vertex, index, vertexs) => {
-                    const prevVertex = index === 0 ? vertexs[vertexsLastIndex] : vertexs[index - 1]
-                    return {
-                      M: `M ${vertex.x} ${vertex.y}`,
-                      L: `L ${vertex.x} ${vertex.y}`,
-                      C: `C ${prevVertex.nextHandlerX} ${prevVertex.nextHandlerY}, ${vertex.currentHandlerX} ${vertex.currentHandlerY}, ${vertex.x} ${vertex.y}`,
-                      S: `S ${vertex.currentHandlerX} ${vertex.currentHandlerY}, ${vertex.x} ${vertex.y}`,
-                    }[vertex.type!]
-                  })
-                  .join(' ')
-              }
-              fill={currentOptions.fill}
-              stroke={currentOptions.stroke}
-              strokeWidth={currentOptions.strokeWidth}
-              opacity={currentOptions.opacity}
-              strokeLinejoin="round"
-              strokeLinecap="round"
-              className="stroke-blue-400 stroke-4"
-            />
+          <div className="mb-1 flex items-center justify-end">
+            <h2 className="sr-only">{panel}</h2>
+            <button
+              type="button"
+              aria-label="Close panel"
+              onClick={() => setPanel(null)}
+              className="rounded px-2 text-lg hover:bg-gray-500"
+            >
+              ×
+            </button>
+          </div>
+          {panel === 'Layers' && <LayersPanel />}
+          {panel === 'Properties' && (
+            <>
+              <PropertiesPanel />
+              <MediaProperties />
+            </>
           )}
-          {vertexs.map((vertex, index) => (
-            <circle
-              key={vertex.id}
-              id={vertex.id}
-              cx={vertex.x}
-              cy={vertex.y}
-              r="4"
-              fill={'white'}
-              strokeWidth={2}
-              className={`${index === 0 ? 'stroke-red-400' : 'stroke-blue-400'}`}
-              style={{ cursor: 'pointer' }}
-              onMouseDown={(event) => handleMouseDownVertex(event, index)}
-            />
-          ))}
-        </svg>
+          {panel === 'Artboards' && <ArtboardsPanel />}
+        </aside>
       )}
-      {mode.type === 'PENCIL' && (
-        <svg
-          viewBox={`0 0 ${window.innerWidth} ${window.innerHeight}`}
-          width={window.innerWidth}
-          height={window.innerHeight}
-          tabIndex={0}
-          onMouseDown={(event) => {
-            isDragged.current = true
-            setSpline([{ type: null, x: event.clientX, y: event.clientY, id: uuid() }])
-          }}
-          onMouseMove={(event) => {
-            if (!isDragged.current) return
-            setSpline((spline) => [...spline, { type: null, x: event.clientX, y: event.clientY, id: uuid() }])
-          }}
-          onMouseUp={(event) => {
-            const { center, width, height } = getSvgInformationFromPath(spline)
-
-            setDrawings((drawings) => [
-              ...drawings,
-              {
-                id: uuid(),
-                type: 'SPLINE',
-                subType: null,
-                vertexs: spline,
-                width,
-                height,
-                center,
-                rotate: 0,
-                fill: 'none',
-                stroke: currentOptions.stroke,
-                strokeWidth: currentOptions.strokeWidth,
-                opacity: currentOptions.opacity,
-              },
-            ])
-            setSpline([])
-            isDragged.current = false
-          }}
-          onKeyDown={handleKeyDown}
-          className="absolute top-0 left-0 cursor-pencil"
+      <WorkspaceToolBar />
+      <div className="context-tools fixed bottom-[72px] left-1/2 z-20 max-w-[calc(100%-2rem)] -translate-x-1/2 rounded-lg bg-gray-600 text-white shadow-sm">
+        {selection.length > 1 && <VectorToolBar />}
+        {selection.length === 1 && mode.type === 'SELECT' && mode.subType === 'VERTEX' && <VertexToolBar />}
+      </div>
+      <div
+        className="viewport-tools fixed bottom-4 left-4 z-20 flex items-center gap-1 rounded-lg bg-gray-600 p-1 text-xs text-white shadow-sm"
+        role="toolbar"
+        aria-label="Viewport controls"
+      >
+        <button
+          aria-label="Zoom out"
+          title="Zoom out"
+          className="rounded p-2 hover:bg-gray-500"
+          onClick={() => zoomAt(viewport.zoom / 1.25, { x: window.innerWidth / 2, y: window.innerHeight / 2 })}
         >
-          <path
-            d={spline.reduce(
-              (acc, point, i, a) => (i === 0 ? `M ${point.x},${point.y}` : `${acc} ${bezierCommand(point, i, a)}`),
-              '',
-            )}
-            fill="none"
-            stroke={currentOptions.stroke}
-            strokeWidth={currentOptions.strokeWidth}
-            opacity={currentOptions.opacity}
-            strokeLinejoin="round"
-            strokeLinecap="round"
-          />
-        </svg>
+          −
+        </button>
+        <button
+          title="Reset to 100%"
+          aria-label="Reset zoom"
+          className="min-w-[44px] rounded p-1 hover:bg-gray-500"
+          onClick={() => zoomAt(1, { x: window.innerWidth / 2, y: window.innerHeight / 2 })}
+        >
+          {Math.round(viewport.zoom * 100)}%
+        </button>
+        <button
+          aria-label="Zoom in"
+          title="Zoom in"
+          className="rounded p-2 hover:bg-gray-500"
+          onClick={() => zoomAt(viewport.zoom * 1.25, { x: window.innerWidth / 2, y: window.innerHeight / 2 })}
+        >
+          +
+        </button>
+        <button title="Fit artwork" onClick={fit} className="rounded p-2 hover:bg-gray-500">
+          Fit
+        </button>
+        <button
+          aria-pressed={grid}
+          onClick={() => setGrid(!grid)}
+          className={`rounded p-2 ${grid ? 'bg-gray-500 text-sky-200' : ''}`}
+        >
+          Grid
+        </button>
+        <button
+          aria-pressed={snap}
+          onClick={() => setSnap(!snap)}
+          className={`rounded p-2 ${snap ? 'bg-gray-500 text-sky-200' : ''}`}
+        >
+          Snap
+        </button>
+        <button
+          aria-label="Reset view"
+          title="Reset view"
+          onClick={() => setViewport({ x: 0, y: 0, zoom: 1 })}
+          className="rounded p-2 hover:bg-gray-500"
+        >
+          ↺
+        </button>
+      </div>
+      {importing && (
+        <div
+          role="status"
+          className="fixed bottom-28 left-1/2 z-30 -translate-x-1/2 rounded-lg bg-gray-600 px-4 py-2 text-sm text-white"
+        >
+          Importing image…
+        </div>
       )}
-      {selectedDrawing && mode.subType === 'SHAPE' && <Handler />}
-      {selectedDrawing && mode.subType === 'VERTEX' && <VertexHandler />}
     </main>
   )
 }

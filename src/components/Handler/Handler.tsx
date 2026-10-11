@@ -1,17 +1,22 @@
-import { drawingsAtom, selectedDrawingIdAtom, selectedDrawingState } from '@/recoil/atoms'
-import { Direction, Vertex } from '@/types/type'
-import React, { useEffect, useRef, useState } from 'react'
-import { useRecoilState, useRecoilValue } from 'recoil'
+import { drawingsAtom, gridAtom, documentState, selectedDrawingState, snapAtom, viewportAtom } from '@/recoil/atoms'
+import { Direction } from '@/types/type'
+import React, { useEffect, useState } from 'react'
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
+import { createPortal } from 'react-dom'
+import { snapGuidesAtom } from '@/recoil/vertexSelection'
+import { snapPoint, snapTranslation } from '@/utils/snapping'
 import { IoCloseCircleOutline } from 'react-icons/io5'
-import { remap } from '@/utils/remap'
-import { rotateVertex } from '@/utils/rotateVertex'
 import VerticalDivider from '../common/VerticalDivider'
 import usePointDrag from '@/hooks/usePointDrag'
+import { useOverlaySelection } from '@/hooks/useOverlaySelection'
+import { LayerOrder, resizeDrawing, rotateDrawing, translateDrawing } from '@/utils/drawingGeometry'
+import { useEditorActions } from '@/editor/useEditorActions'
+import { reorderDocumentSelection } from '@/editor/operations'
 
 const rotateHandler = [
   { key: 'TL', position: '-top-9 -left-9' },
   { key: 'TR', position: '-top-9 -right-9' },
-  { key: 'BL', position: '-bottom-9 -left-9 ' },
+  { key: 'BL', position: '-bottom-9 -left-9' },
   { key: 'BR', position: '-bottom-9 -right-9' },
 ]
 
@@ -26,455 +31,185 @@ const resizeHandler = [
   { position: 'top-full left-full', direction: 'BR' },
 ]
 
+type Transform = { type: 'TRANSLATE' | 'RESIZE' | 'ROTATE'; direction?: Direction }
+
 const Handler = () => {
-  // recoil
-  const [selectedDrawingId] = useRecoilState(selectedDrawingIdAtom)
+  const editorDocument = useRecoilValue(documentState)
+  const actions = useEditorActions()
   const [drawings, setDrawings] = useRecoilState(drawingsAtom)
   const selectedDrawing = useRecoilValue(selectedDrawingState)
-  const selectedDrawingIndex = drawings.findIndex((drawing) => drawing.id === selectedDrawingId)
+  const toggleUnderPointer = useOverlaySelection()
+  const viewport = useRecoilValue(viewportAtom)
+  const snapping = useRecoilValue(snapAtom)
+  const grid = useRecoilValue(gridAtom)
+  const setGuides = useSetRecoilState(snapGuidesAtom)
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
+  const { start, pointerHandlers } = usePointDrag<Transform>(
+    selectedDrawing?.locked || selectedDrawing?.hidden ? null : selectedDrawing,
+    (drawing, from, to, detail, modifiers) => {
+      const others = drawings.filter((item) => item.id !== drawing.id)
+      if (detail.type === 'TRANSLATE') {
+        const delta = { x: to.x - from.x, y: to.y - from.y }
+        if (modifiers.shift) {
+          if (Math.abs(delta.x) >= Math.abs(delta.y)) delta.y = 0
+          else delta.x = 0
+        }
+        const snapped =
+          snapping && !modifiers.alt
+            ? snapTranslation([drawing], others, delta, viewport.zoom, grid)
+            : { point: delta, guides: [] }
+        setGuides(snapped.guides)
+        return translateDrawing(drawing, snapped.point.x, snapped.point.y)
+      }
+      if (detail.type === 'RESIZE') {
+        const snapped =
+          snapping && !modifiers.alt && !modifiers.shift
+            ? snapPoint(to, others, viewport.zoom, grid)
+            : { point: to, guides: [] }
+        setGuides(snapped.guides)
+        return resizeDrawing(drawing, detail.direction ?? null, from, snapped.point, modifiers.shift)
+      }
+      const initial = Math.atan2(from.y - drawing.center.y, from.x - drawing.center.x)
+      const final = Math.atan2(to.y - drawing.center.y, to.x - drawing.center.x)
+      const angle = (final - initial) * (180 / Math.PI)
+      return rotateDrawing(
+        drawing,
+        modifiers.shift ? Math.round((drawing.rotate + angle) / 45) * 45 - drawing.rotate : angle,
+      )
+    },
+    (next) => setDrawings((items) => items.map((item) => (item.id === next.id ? next : item))),
+    () => setGuides([]),
+  )
 
-  if (!selectedDrawing) return null
+  useEffect(() => setMenu(null), [selectedDrawing?.id])
 
-  // custom hooks
-  const { point, isDragged, onDrag, offDrag, prevRef, setStartPoint, resetPoint, resetPrev } = usePointDrag()
-
-  // useState
-  const [openItemMenu, setOpenItemMenu] = useState<{
-    open: boolean
-    x: number | null
-    y: number | null
-  }>({ open: false, x: null, y: null })
-
-  // uesRef
-  const transitionType = useRef<'TRANSLATE' | 'RESIZE' | 'ROTATE' | null>(null)
-  const handlerRef = useRef<HTMLDivElement>(null)
-  const directionRef = useRef<Direction>(null)
-
-  // useEffect
   useEffect(() => {
-    if (!handlerRef.current) return
-    handlerRef.current.style.width = `${selectedDrawing.width}px`
-    handlerRef.current.style.height = `${selectedDrawing.height}px`
-    handlerRef.current.style.top = `${selectedDrawing.center.y - selectedDrawing.height / 2}px`
-    handlerRef.current.style.left = `${selectedDrawing.center.x - selectedDrawing.width / 2}px`
-    handlerRef.current.style.rotate = `${selectedDrawing.rotate}deg`
-  }, [selectedDrawingId])
-
-  useEffect(() => {
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup', handleMouseUp)
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleMouseUp)
+    if (!menu) return
+    const close = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenu(null)
     }
-  }, [])
+    window.addEventListener('keydown', close)
+    return () => window.removeEventListener('keydown', close)
+  }, [menu])
 
-  // function
-  const handleMouseDown = (event: React.MouseEvent) => {
-    event.stopPropagation()
-
-    resetPrev()
-    onDrag()
-    setStartPoint(event)
-
-    if (!handlerRef.current) return
-    prevRef.current.width = handlerRef.current.offsetWidth
-    prevRef.current.height = handlerRef.current.offsetHeight
-    prevRef.current.center.x = handlerRef.current.offsetLeft + prevRef.current.width / 2
-    prevRef.current.center.y = handlerRef.current.offsetTop + prevRef.current.height / 2
-    prevRef.current.rotate = selectedDrawing.rotate
-    prevRef.current.vertexs = selectedDrawing.vertexs
+  if (!selectedDrawing || selectedDrawing.hidden || selectedDrawing.locked) return null
+  const canRaise =
+    Boolean(menu) && reorderDocumentSelection(editorDocument, [selectedDrawing.id], 'up') !== editorDocument
+  const canLower =
+    Boolean(menu) && reorderDocumentSelection(editorDocument, [selectedDrawing.id], 'down') !== editorDocument
+  const reorder = (order: LayerOrder) => {
+    const direction = order === 'forward' ? 'up' : order === 'backward' ? 'down' : order
+    actions.updateDocument((current) => reorderDocumentSelection(current, [selectedDrawing.id], direction))
+    setMenu(null)
   }
-
-  const handleMouseMove = (event: React.MouseEvent | MouseEvent) => {
-    event.stopPropagation()
-    if (
-      !isDragged.current ||
-      !handlerRef.current ||
-      !point.current.startX ||
-      !point.current.startY ||
-      prevRef.current.width === null ||
-      prevRef.current.height === null ||
-      prevRef.current.center.x === null ||
-      prevRef.current.center.y === null ||
-      prevRef.current.rotate === null
-    )
-      return
-
-    closeItemMenu()
-    const prevLeft = prevRef.current.center.x - prevRef.current.width / 2
-    const prevTop = prevRef.current.center.y - prevRef.current.height / 2
-
-    if (transitionType.current === 'TRANSLATE') {
-      const horizontalChange = event.clientX - point.current.startX
-      const verticalChange = event.clientY - point.current.startY
-      const nextLeft = prevLeft + horizontalChange
-      const nextTop = prevTop + verticalChange
-      const nextCenter = {
-        x: prevRef.current.center.x + horizontalChange,
-        y: prevRef.current.center.y + verticalChange,
-      }
-      handlerRef.current.style.left = nextLeft + 'px'
-      handlerRef.current.style.top = nextTop + 'px'
-
-      setDrawings((drawings) =>
-        drawings.map((drawing) =>
-          drawing.id === selectedDrawing.id
-            ? {
-                ...drawing,
-                center: nextCenter,
-                vertexs: prevRef.current.vertexs?.map((vertex: Vertex) => {
-                  const newVertex = { ...vertex }
-                  for (const key in vertex) {
-                    if (key === 'x' || key === 'currentHandlerX' || key === 'nextHandlerX') {
-                      newVertex[key] = (vertex[key] as number) + horizontalChange
-                    } else if (key === 'y' || key === 'currentHandlerY' || key === 'nextHandlerY') {
-                      newVertex[key] = (vertex[key] as number) + verticalChange
-                    }
-                  }
-                  return newVertex
-                }),
-              }
-            : drawing,
-        ),
-      )
-    } else if (transitionType.current === 'RESIZE') {
-      if (!directionRef.current) return
-
-      const rotatedStartPoint = rotateVertex(
-        point.current.startX,
-        point.current.startY,
-        prevRef.current.center.x,
-        prevRef.current.center.y,
-        -prevRef.current.rotate,
-      )
-      const rotatedEndPoint = rotateVertex(
-        event.clientX,
-        event.clientY,
-        prevRef.current.center.x,
-        prevRef.current.center.y,
-        -prevRef.current.rotate,
-      )
-
-      const resize = (deltaX: number, deltaY: number) => {
-        if (handlerRef.current === null || prevRef.current.width === null || prevRef.current.height === null) return
-        const nextCenterX =
-          (handlerRef.current.getBoundingClientRect().left + handlerRef.current.getBoundingClientRect().right) / 2
-
-        const nextCenterY =
-          (handlerRef.current.getBoundingClientRect().top + handlerRef.current.getBoundingClientRect().bottom) / 2
-
-        const width = prevRef.current.width + deltaX
-        const height = prevRef.current.height + deltaY
-
-        const nextWidth = Math.abs(width)
-        const nextHeight = Math.abs(height)
-
-        const nextVertexs = prevRef.current.vertexs?.map((vertex) => {
-          const getNextVertex = (prevX: number, prevY: number) => {
-            const rotatedVertex = rotateVertex(
-              prevX,
-              prevY,
-              prevRef.current.center.x!,
-              prevRef.current.center.y!,
-              -prevRef.current.rotate!,
-            )
-            const nextX = remap(
-              rotatedVertex.x,
-              -prevRef.current.width! / 2,
-              prevRef.current.width! / 2,
-              -width / 2,
-              width / 2,
-            )
-            const nextY = remap(
-              rotatedVertex.y,
-              -prevRef.current.height! / 2,
-              prevRef.current.height! / 2,
-              -height / 2,
-              height / 2,
-            )
-            return rotateVertex(nextX, nextY, 0, 0, prevRef.current.rotate!)
-          }
-          let nextVertex = { ...vertex }
-          const { x, y } = getNextVertex(vertex.x, vertex.y)
-          nextVertex = { ...nextVertex, x: x + prevRef.current.center.x!, y: y + prevRef.current.center.y! }
-          if (vertex.currentHandlerX && vertex.currentHandlerY) {
-            const { x: currentHandlerX, y: currentHandlerY } = getNextVertex(
-              vertex.currentHandlerX,
-              vertex.currentHandlerY,
-            )
-            nextVertex = {
-              ...nextVertex,
-              currentHandlerX: currentHandlerX + prevRef.current.center.x!,
-              currentHandlerY: currentHandlerY + prevRef.current.center.y!,
-            }
-          }
-          if (vertex.nextHandlerX && vertex.nextHandlerY) {
-            const { x: nextHandlerX, y: nextHandlerY } = getNextVertex(vertex.nextHandlerX, vertex.nextHandlerY)
-            nextVertex = {
-              ...nextVertex,
-              nextHandlerX: nextHandlerX + prevRef.current.center.x!,
-              nextHandlerY: nextHandlerY + prevRef.current.center.y!,
-            }
-          }
-          return nextVertex
-        })
-
-        handlerRef.current.style.width = nextWidth + 'px'
-        handlerRef.current.style.height = nextHeight + 'px'
-        handlerRef.current.style.left = nextCenterX - nextWidth / 2 + 'px'
-        handlerRef.current.style.top = nextCenterY - nextHeight / 2 + 'px'
-
-        setDrawings((drawings) =>
-          drawings.map((drawing) =>
-            drawing.id === selectedDrawing.id
-              ? {
-                  ...drawing,
-                  width: nextWidth,
-                  height: nextHeight,
-                  center: { x: nextCenterX, y: nextCenterY },
-                  vertexs: nextVertexs,
-                }
-              : drawing,
-          ),
-        )
-      }
-      const deltaX = (rotatedEndPoint.x - rotatedStartPoint.x) * 2
-      const deltaY = (rotatedEndPoint.y - rotatedStartPoint.y) * 2
-
-      switch (directionRef.current) {
-        case 'TL':
-          resize(-deltaX, -deltaY)
-          break
-        case 'T':
-          resize(0, -deltaY)
-          break
-        case 'TR':
-          resize(deltaX, -deltaY)
-          break
-        case 'L':
-          resize(-deltaX, 0)
-          break
-        case 'R':
-          resize(deltaX, 0)
-          break
-        case 'BL':
-          resize(-deltaX, deltaY)
-          break
-        case 'B':
-          resize(0, deltaY)
-          break
-        case 'BR':
-          resize(deltaX, deltaY)
-          break
-        default:
-          break
-      }
-    } else if (transitionType.current === 'ROTATE' && prevRef.current.rotate !== null) {
-      document.body.style.cursor = 'url(/image/cursor/rotate.svg) 12 12, auto'
-      const initialAngle =
-        Math.atan2(point.current.startX - prevRef.current.center.x, point.current.startY - prevRef.current.center.y) *
-        (180 / Math.PI)
-      const finalAngle =
-        Math.atan2(event.clientX - prevRef.current.center.x, event.clientY - prevRef.current.center.y) * (180 / Math.PI)
-
-      const rotateAngle = initialAngle - finalAngle
-      const nextRotate = prevRef.current.rotate + rotateAngle
-      handlerRef.current.style.rotate = nextRotate + 'deg'
-
-      const nextVertexs = prevRef.current.vertexs.map((vertex) => {
-        const getNextVertex = (prevX: number, prevY: number) => {
-          const r = rotateAngle * (Math.PI / 180)
-
-          const nextX =
-            (prevX - prevRef.current.center.x!) * Math.cos(r) -
-            (prevY - prevRef.current.center.y!) * Math.sin(r) +
-            prevRef.current.center.x!
-          const nextY =
-            (prevX - prevRef.current.center.x!) * Math.sin(r) +
-            (prevY - prevRef.current.center.y!) * Math.cos(r) +
-            prevRef.current.center.y!
-
-          return { x: nextX, y: nextY }
-        }
-
-        let nextVertex = { ...vertex }
-        const { x, y } = getNextVertex(vertex.x, vertex.y)
-        nextVertex = { ...nextVertex, x, y }
-        if (vertex.currentHandlerX && vertex.currentHandlerY) {
-          const { x: currentHandlerX, y: currentHandlerY } = getNextVertex(
-            vertex.currentHandlerX,
-            vertex.currentHandlerY,
-          )
-          nextVertex = {
-            ...nextVertex,
-            currentHandlerX: currentHandlerX,
-            currentHandlerY: currentHandlerY,
-          }
-        }
-        if (vertex.nextHandlerX && vertex.nextHandlerY) {
-          const { x: nextHandlerX, y: nextHandlerY } = getNextVertex(vertex.nextHandlerX, vertex.nextHandlerY)
-          nextVertex = {
-            ...nextVertex,
-            nextHandlerX: nextHandlerX,
-            nextHandlerY: nextHandlerY,
-          }
-        }
-        return nextVertex
-      })
-
-      setDrawings((drawings) =>
-        drawings.map((drawing) =>
-          drawing.id === selectedDrawing.id
-            ? {
-                ...drawing,
-                rotate: nextRotate,
-                vertexs: nextVertexs,
-              }
-            : drawing,
-        ),
-      )
-    }
-  }
-
-  const handleMouseUp = (event: React.MouseEvent | MouseEvent) => {
-    event.stopPropagation()
-    document.body.style.cursor = 'auto'
-
-    offDrag()
-    resetPoint()
-    transitionType.current = null
-  }
-
-  const closeItemMenu = () => {
-    setOpenItemMenu({ open: false, x: null, y: null })
-  }
-
-  const handleMouseClickRight = (event: React.MouseEvent | MouseEvent) => {
-    event.preventDefault()
-    setOpenItemMenu({ open: true, x: event.clientX, y: event.clientY })
-  }
-
-  const handleClickDeleteDrawingButton = () => {
-    setDrawings((drawings) => drawings.filter((drawing) => drawing.id !== selectedDrawingId))
-    setOpenItemMenu({ open: false, x: null, y: null })
-  }
-
-  const handleClickBringToFrontButton = () => {
-    if (drawings.length === 0) return
-
-    const nextDrawings = [...drawings]
-    nextDrawings.splice(selectedDrawingIndex, 1)
-    nextDrawings.splice(selectedDrawingIndex + 1, 0, selectedDrawing)
-    setDrawings(nextDrawings)
-
-    setOpenItemMenu({ open: false, x: null, y: null })
-  }
-
-  const handleClickSendToBackButton = () => {
-    if (drawings.length === 0) return
-
-    const nextDrawings = [...drawings]
-    nextDrawings.splice(selectedDrawingIndex, 1)
-    nextDrawings.splice(selectedDrawingIndex - 1, 0, selectedDrawing)
-    setDrawings(nextDrawings)
-
-    setOpenItemMenu({ open: false, x: null, y: null })
-  }
-
-  const handleClickBringForwardButton = () => {
-    if (drawings.length === 0) return
-
-    const nextDrawings = [...drawings]
-    nextDrawings.splice(selectedDrawingIndex, 1)
-    setDrawings([...nextDrawings, selectedDrawing])
-
-    setOpenItemMenu({ open: false, x: null, y: null })
-  }
-
-  const handleClickSendBackwardButton = () => {
-    if (drawings.length === 0) return
-
-    const nextDrawings = [...drawings]
-    nextDrawings.splice(selectedDrawingIndex, 1)
-    setDrawings([selectedDrawing, ...nextDrawings])
-
-    setOpenItemMenu({ open: false, x: null, y: null })
+  const begin = (event: React.PointerEvent<Element>, detail: Transform) => {
+    setMenu(null)
+    if (detail.type === 'TRANSLATE' && toggleUnderPointer(event)) return
+    start(event, detail)
   }
 
   return (
     <>
       <div
-        ref={handlerRef}
-        className="absolute border-2 border-blue-400 cursor-move pointer-events-auto"
-        onMouseDown={(e) => {
-          transitionType.current = 'TRANSLATE'
-          handleMouseDown(e)
+        aria-label="Selected object"
+        data-testid="selection-handler"
+        className="absolute border-solid border-blue-400 cursor-move pointer-events-auto touch-none"
+        style={{
+          borderWidth: 1 / viewport.zoom,
+          width: Math.max(selectedDrawing.width, 1),
+          height: Math.max(selectedDrawing.height, 1),
+          left: selectedDrawing.center.x - Math.max(selectedDrawing.width, 1) / 2,
+          top: selectedDrawing.center.y - Math.max(selectedDrawing.height, 1) / 2,
+          rotate: `${selectedDrawing.rotate}deg`,
         }}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onContextMenu={handleMouseClickRight}
+        onPointerDown={(event) => begin(event, { type: 'TRANSLATE' })}
+        {...pointerHandlers}
+        onContextMenu={(event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          setMenu({ x: event.clientX, y: event.clientY })
+        }}
       >
         {resizeHandler.map(({ position, direction }) => (
           <div
             key={direction}
-            className={`${position} absolute w-4 h-4 -translate-x-1/2 -translate-y-1/2 bg-white border-2 border-blue-400 rounded-full cursor-nwse-resize`}
-            onMouseDown={(e) => {
-              transitionType.current = 'RESIZE'
-              directionRef.current = direction as Direction
-              handleMouseDown(e)
-            }}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
+            title={`Resize ${direction}`}
+            data-testid={`resize-${direction}`}
+            className={`${position} absolute -translate-x-1/2 -translate-y-1/2 bg-white border-solid border-blue-400 rounded-full cursor-nwse-resize touch-none`}
+            style={{ width: 12 / viewport.zoom, height: 12 / viewport.zoom, borderWidth: 2 / viewport.zoom }}
+            onPointerDown={(event) => begin(event, { type: 'RESIZE', direction: direction as Direction })}
           />
         ))}
-        {rotateHandler.map(({ position, key }) => (
+        {rotateHandler.map(({ key }) => (
           <div
             key={key}
-            className={`absolute w-8 h-8 cursor-rotate ${position}`}
-            onMouseDown={(e) => {
-              transitionType.current = 'ROTATE'
-              handleMouseDown(e)
+            title="Rotate object"
+            data-testid={`rotate-${key}`}
+            className="absolute cursor-rotate touch-none"
+            style={{
+              width: 28 / viewport.zoom,
+              height: 28 / viewport.zoom,
+              [key.includes('T') ? 'top' : 'bottom']: -32 / viewport.zoom,
+              [key.includes('L') ? 'left' : 'right']: -32 / viewport.zoom,
             }}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
+            onPointerDown={(event) => begin(event, { type: 'ROTATE' })}
           />
         ))}
       </div>
-      {openItemMenu.open && (
-        <div
-          className="absolute flex items-center gap-2.5 p-3 text-white bg-gray-600 rounded-lg"
-          style={{
-            left: openItemMenu.x ?? undefined,
-            top: openItemMenu.y ?? undefined,
-          }}
-        >
-          <div className="cursor-pointer" onClick={handleClickDeleteDrawingButton}>
-            Delete
-          </div>
-          <VerticalDivider />
-          <div className="cursor-pointer" onClick={handleClickBringToFrontButton}>
-            Bring To Front
-          </div>
-          <VerticalDivider />
-          <div className="cursor-pointer" onClick={handleClickSendToBackButton}>
-            Send To Back
-          </div>
-          <VerticalDivider />
-          <div className="cursor-pointer" onClick={handleClickBringForwardButton}>
-            Bring Forward
-          </div>
-          <VerticalDivider />
-          <div className="cursor-pointer" onClick={handleClickSendBackwardButton}>
-            Send Backward
-          </div>
-          <VerticalDivider />
-          <div className="cursor-pointer" onClick={closeItemMenu}>
-            <IoCloseCircleOutline size={24} />
-          </div>
-        </div>
-      )}
+      {menu &&
+        createPortal(
+          <div
+            role="group"
+            aria-label="Object actions"
+            className="fixed z-30 flex max-w-[calc(100vw-2rem)] flex-wrap items-center gap-2.5 rounded-lg bg-gray-600 p-3 text-sm text-white shadow-lg"
+            style={{
+              left: Math.max(16, Math.min(menu.x, window.innerWidth - 580)),
+              top: Math.max(16, Math.min(menu.y, window.innerHeight - 100)),
+            }}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                actions.deleteSelection()
+                setMenu(null)
+              }}
+            >
+              Delete
+            </button>
+            <VerticalDivider />
+            <button type="button" disabled={!canRaise} className="disabled:opacity-40" onClick={() => reorder('front')}>
+              Bring To Front
+            </button>
+            <VerticalDivider />
+            <button type="button" disabled={!canLower} className="disabled:opacity-40" onClick={() => reorder('back')}>
+              Send To Back
+            </button>
+            <VerticalDivider />
+            <button
+              type="button"
+              disabled={!canRaise}
+              className="disabled:opacity-40"
+              onClick={() => reorder('forward')}
+            >
+              Bring Forward
+            </button>
+            <VerticalDivider />
+            <button
+              type="button"
+              disabled={!canLower}
+              className="disabled:opacity-40"
+              onClick={() => reorder('backward')}
+            >
+              Send Backward
+            </button>
+            <VerticalDivider />
+            <button type="button" aria-label="Close object actions" onClick={() => setMenu(null)}>
+              <IoCloseCircleOutline size={24} />
+            </button>
+          </div>,
+          document.body,
+        )}
     </>
   )
 }

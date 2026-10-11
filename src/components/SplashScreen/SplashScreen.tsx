@@ -24,13 +24,7 @@ const SplashScreen = () => {
       </button>
       <svg viewBox="0 0 400 100">
         <symbol id="s-text">
-          <text
-            textAnchor="middle"
-            x="50%"
-            y="50%"
-            fontSize={30}
-            fontWeight={900}
-          >
+          <text textAnchor="middle" x="50%" y="50%" fontSize={30} fontWeight={900}>
             Nijoow Drawing
           </text>
         </symbol>

@@ -1,13 +1,13 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { RiCursorFill, RiPencilFill, RiPenNibFill } from 'react-icons/ri'
-import { IoShapes, IoText, IoSquare, IoTriangle, IoEllipse, IoNavigate } from 'react-icons/io5'
+import { RiCursorFill, RiPencilFill, RiPenNibFill, RiText, RiImageAddLine } from 'react-icons/ri'
+import { IoShapes, IoSquare, IoTriangle, IoEllipse, IoNavigate, IoHandLeftOutline } from 'react-icons/io5'
 import { useRecoilState } from 'recoil'
 import { modeAtom } from '@/recoil/atoms'
 import { SubToolBar } from '@/types/type'
 
-export default function SideToolBar() {
+export default function SideToolBar({ onImportImage }: { onImportImage: () => void }) {
   const [mode, setMode] = useRecoilState(modeAtom)
   const [openSubToolBar, setOpenSubToolBar] = useState<SubToolBar>({
     type: null,
@@ -21,6 +21,18 @@ export default function SideToolBar() {
       }
     }
     const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target
+      if (
+        event.isComposing ||
+        event.keyCode === 229 ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey ||
+        (target instanceof HTMLElement &&
+          (target.isContentEditable || target.closest('input, textarea, select, [contenteditable="true"]')))
+      )
+        return
+      if (event.key === 'Escape') setOpenSubToolBar({ type: null })
       switch (event.key) {
         case 'v':
         case 'ㅍ':
@@ -38,6 +50,14 @@ export default function SideToolBar() {
         case 'ㅔ':
           setMode({ type: 'VERTEX', subType: null })
           break
+        case 't':
+        case 'ㅅ':
+          setMode({ type: 'TEXT', subType: null })
+          break
+        case 'h':
+        case 'ㅗ':
+          setMode({ type: 'HAND', subType: null })
+          break
         default:
           break
       }
@@ -49,15 +69,20 @@ export default function SideToolBar() {
       window.removeEventListener('mousedown', handleMouseDown)
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [])
+  }, [setMode])
 
   return (
     <div
       ref={toolBarRef}
       className="fixed z-10 flex flex-col items-center justify-center w-16 gap-2 py-2 overflow-visible text-white -translate-y-1/2 bg-gray-600 rounded-lg left-4 top-1/2 min-h-fit"
+      role="toolbar"
+      aria-label="Drawing tools"
     >
       <button
         type="button"
+        title="Select (V)"
+        aria-label="Select"
+        aria-pressed={mode.type === 'SELECT' && mode.subType === 'SHAPE'}
         className={`py-2 w-full hover:text-[#4ea1d3] flex items-center justify-center ${
           mode.type === 'SELECT' && mode.subType === 'SHAPE' ? 'text-[#4ea1d3]' : ''
         }`}
@@ -70,6 +95,9 @@ export default function SideToolBar() {
       </button>
       <button
         type="button"
+        title="Edit points (A)"
+        aria-label="Edit points"
+        aria-pressed={mode.type === 'SELECT' && mode.subType === 'VERTEX'}
         className={`py-2 w-full hover:text-[#4ea1d3] flex items-center justify-center ${
           mode.type === 'SELECT' && mode.subType === 'VERTEX' ? 'text-[#4ea1d3]' : ''
         }`}
@@ -82,6 +110,9 @@ export default function SideToolBar() {
       </button>
       <button
         type="button"
+        title="Pencil (N)"
+        aria-label="Pencil"
+        aria-pressed={mode.type === 'PENCIL'}
         className={`py-2 w-full hover:text-[#4ea1d3] flex items-center justify-center ${
           mode.type === 'PENCIL' ? 'text-[#4ea1d3]' : ''
         }`}
@@ -94,6 +125,9 @@ export default function SideToolBar() {
       </button>
       <button
         type="button"
+        title="Pen (P)"
+        aria-label="Pen"
+        aria-pressed={mode.type === 'VERTEX'}
         className={`py-2 w-full hover:text-[#4ea1d3] flex items-center justify-center ${
           mode.type === 'VERTEX' ? 'text-[#4ea1d3]' : ''
         }`}
@@ -107,10 +141,14 @@ export default function SideToolBar() {
       <div className="relative flex items-center justify-center w-full ">
         <button
           type="button"
+          title="Shapes"
+          aria-label="Shapes"
+          aria-pressed={mode.type === 'SHAPE'}
+          aria-expanded={openSubToolBar.type === 'SHAPE'}
           className={`py-2 w-full hover:text-[#4ea1d3] flex items-center justify-center ${
             mode.type === 'SHAPE' ? 'text-[#4ea1d3]' : ''
           }`}
-          onClick={() => setOpenSubToolBar({ type: 'SHAPE' })}
+          onClick={() => setOpenSubToolBar({ type: openSubToolBar.type === 'SHAPE' ? null : 'SHAPE' })}
         >
           <IoShapes size={20} />
         </button>
@@ -118,6 +156,9 @@ export default function SideToolBar() {
           <div className="absolute top-0 flex flex-col bg-gray-600 rounded-b-lg rounded-r-lg left-full ">
             <button
               type="button"
+              title="Rectangle"
+              aria-label="Rectangle"
+              aria-pressed={mode.type === 'SHAPE' && mode.subType === 'RECTANGLE'}
               className="p-3 hover:text-gray-400"
               onClick={() => {
                 setMode({ type: 'SHAPE', subType: 'RECTANGLE' })
@@ -128,6 +169,9 @@ export default function SideToolBar() {
             </button>
             <button
               type="button"
+              title="Ellipse"
+              aria-label="Ellipse"
+              aria-pressed={mode.type === 'SHAPE' && mode.subType === 'ELLIPSE'}
               className="p-3 hover:text-gray-400"
               onClick={() => {
                 setMode({ type: 'SHAPE', subType: 'ELLIPSE' })
@@ -138,6 +182,9 @@ export default function SideToolBar() {
             </button>
             <button
               type="button"
+              title="Triangle"
+              aria-label="Triangle"
+              aria-pressed={mode.type === 'SHAPE' && mode.subType === 'TRIANGLE'}
               className="p-3 hover:text-gray-400"
               onClick={() => {
                 setMode({ type: 'SHAPE', subType: 'TRIANGLE' })
@@ -149,19 +196,39 @@ export default function SideToolBar() {
           </div>
         )}
       </div>
-      {/* <button
+      <button
         type="button"
-        className={`py-2 w-full hover:text-[#4ea1d3] flex items-center justify-center ${
-          mode.type === 'TEXT' ? 'text-[#4ea1d3]' : ''
+        aria-label="Text"
+        title="Text (T)"
+        aria-pressed={mode.type === 'TEXT'}
+        className={`flex w-full items-center justify-center py-2 hover:text-sky-300 ${
+          mode.type === 'TEXT' ? 'text-sky-300' : ''
         }`}
-        disabled
-        onClick={() => {
-          setMode({ type: 'TEXT', subType: null })
-          setOpenSubToolBar({ type: null })
-        }}
+        onClick={() => setMode({ type: 'TEXT', subType: null })}
       >
-        <IoText size={20} />
-      </button> */}
+        <RiText size={20} />
+      </button>
+      <button
+        type="button"
+        aria-label="Import image"
+        title="Import PNG, JPEG or WebP"
+        className="flex w-full items-center justify-center py-2 hover:text-sky-300"
+        onClick={onImportImage}
+      >
+        <RiImageAddLine size={20} />
+      </button>
+      <button
+        type="button"
+        aria-label="Hand"
+        title="Pan (H / hold Space)"
+        aria-pressed={mode.type === 'HAND'}
+        className={`flex w-full items-center justify-center py-2 hover:text-sky-300 ${
+          mode.type === 'HAND' ? 'text-sky-300' : ''
+        }`}
+        onClick={() => setMode({ type: 'HAND', subType: null })}
+      >
+        <IoHandLeftOutline size={20} />
+      </button>
     </div>
   )
 }

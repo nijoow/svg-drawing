@@ -18,8 +18,48 @@
 
 html,
 body {
-  width: 100vh;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+button:focus-visible,
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid #4ea1d3;
+  outline-offset: 3px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .panel-switcher {
+    top: 136px;
+  }
+  .editor-panel {
+    top: 184px;
+    max-height: calc(100% - 300px);
+  }
+  .viewport-tools {
+    bottom: 68px;
+  }
+  .context-tools {
+    bottom: 120px;
+  }
+}
+
+@media (max-height: 650px) {
+  [aria-label='Drawing tools'] {
+    gap: 0;
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+  [aria-label='Drawing tools'] > button {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
 }
 
 .text-copy {
