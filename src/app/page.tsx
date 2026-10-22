@@ -43,7 +43,12 @@ export default function Home() {
   }, [])
 
   const fit = () => {
-    fitToDrawing(getViewBounds(document), window.innerWidth - (panel ? 280 : 0), window.innerHeight)
+    const narrow = window.innerWidth <= 1100
+    fitToDrawing(
+      getViewBounds(document),
+      window.innerWidth - (panel && !narrow ? 280 : 0),
+      window.innerHeight - (panel && narrow ? Math.min(window.innerHeight * 0.42, 360) + 116 : 0),
+    )
   }
 
   const importImage = async (file: File, position?: Position) => {
@@ -85,13 +90,13 @@ export default function Home() {
         onEditText={() => setPanel('Properties')}
       />
       <DocumentToolBar />
-      <TopToolBar />
+      {selection.length === 0 && <TopToolBar />}
       <SideToolBar onImportImage={() => fileInput.current?.click()} />
       <input
         ref={fileInput}
         className="hidden"
         type="file"
-        accept="image/png,image/jpeg,image/webp"
+        accept="image/png,image/jpeg,image/webp,image/svg+xml,.svg"
         aria-label="Import image file"
         onChange={(event) => {
           const file = event.target.files?.[0]
@@ -109,6 +114,8 @@ export default function Home() {
             key={name}
             type="button"
             aria-pressed={panel === name}
+            aria-expanded={panel === name}
+            aria-controls="editor-panel"
             className={`rounded px-2 py-2 ${panel === name ? 'bg-gray-500 text-sky-200' : 'hover:bg-gray-500'}`}
             onClick={() => setPanel(panel === name ? null : name)}
           >
@@ -118,11 +125,11 @@ export default function Home() {
       </div>
       {panel && (
         <aside
+          id="editor-panel"
           aria-label={`${panel} panel`}
           className="editor-panel fixed right-4 top-16 z-20 max-h-[calc(100%-10rem)] w-[264px] overflow-y-auto rounded-xl border border-gray-500 bg-gray-600/95 p-3 text-sm text-white shadow-lg backdrop-blur"
         >
           <div className="mb-1 flex items-center justify-end">
-            <h2 className="sr-only">{panel}</h2>
             <button
               type="button"
               aria-label="Close panel"
@@ -142,6 +149,29 @@ export default function Home() {
           {panel === 'Artboards' && <ArtboardsPanel />}
         </aside>
       )}
+      <div
+        className="tool-status fixed left-4 top-[140px] z-10 rounded-lg bg-gray-600 px-3 py-2 text-xs text-white"
+        role="status"
+      >
+        {mode.type === 'SELECT'
+          ? mode.subType === 'VERTEX'
+            ? 'Edit points · A'
+            : 'Select · V'
+          : mode.type === 'SHAPE'
+          ? `${mode.subType?.toLowerCase()} · drag to draw`
+          : mode.type === 'PENCIL'
+          ? 'Pencil · N'
+          : mode.type === 'VERTEX'
+          ? 'Pen · P'
+          : mode.type === 'TEXT'
+          ? 'Text · T'
+          : 'Pan · H'}
+        {selection.length > 0 && (
+          <button type="button" className="ml-3 underline" onClick={() => setPanel('Properties')}>
+            Edit {selection.length === 1 ? 'object' : `${selection.length} objects`}
+          </button>
+        )}
+      </div>
       <WorkspaceToolBar />
       <div className="context-tools fixed bottom-[72px] left-1/2 z-20 max-w-[calc(100%-2rem)] -translate-x-1/2 rounded-lg bg-gray-600 text-white shadow-sm">
         {selection.length > 1 && <VectorToolBar />}

@@ -126,7 +126,10 @@ export function useEditorActions() {
           if (clipboard) set(editorClipboardAtom, { ...clipboard, pasteCount: clipboard.pasteCount + 1 })
         }
         if (['replace', 'undo', 'redo', 'cancel'].includes(command.type)) {
-          set(selectedDrawingIdsAtom, [])
+          set(
+            selectedDrawingIdsAtom,
+            command.type === 'replace' ? [] : expandSelection(result.history.present, selection),
+          )
           set(modeAtom, { type: 'SELECT', subType: 'SHAPE' })
         } else {
           set(selectedDrawingIdsAtom, expandSelection(result.history.present, nextSelection ?? selection))

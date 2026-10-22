@@ -80,6 +80,19 @@ export default function SideToolBar({ onImportImage }: { onImportImage: () => vo
     >
       <button
         type="button"
+        title="Rectangle"
+        aria-label="Draw rectangle"
+        aria-pressed={mode.type === 'SHAPE' && mode.subType === 'RECTANGLE'}
+        className="flex w-full items-center justify-center py-2 hover:text-sky-300"
+        onClick={() => {
+          setMode({ type: 'SHAPE', subType: 'RECTANGLE' })
+          setOpenSubToolBar({ type: null })
+        }}
+      >
+        <IoSquare size={20} />
+      </button>
+      <button
+        type="button"
         title="Select (V)"
         aria-label="Select"
         aria-pressed={mode.type === 'SELECT' && mode.subType === 'SHAPE'}
