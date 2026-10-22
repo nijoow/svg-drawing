@@ -1,0 +1,51 @@
+{
+  "project": "nijoow-drawing",
+  "projectId": "prj_FkdAAmdxbXBs6Y5IliEi5wN3ONDE",
+  "deploymentId": "dpl_54BeuMxmC8r742H12krnvavDPneP",
+  "target": "production",
+  "state": "READY",
+  "url": "https://nijoow-drawing.vercel.app",
+  "deploymentUrl": "https://nijoow-drawing-g1t440pfh-nijoows-projects.vercel.app",
+  "sourceCommit": "7b2e36448a5b8b8969030ccd04a5de9fb3246a76",
+  "mode": "static export from isolated build snapshot",
+  "buildOverride": "Use recovery/production/next.config.js (output: 'export') in an isolated copy of the source.",
+  "vercelProjectNodeVersion": "24.x",
+  "uploadedStaticFiles": 25,
+  "uploadedStaticBytes": 1278908,
+  "verification": {
+    "productionBuild": "passed",
+    "localBrowserFlows": 8,
+    "localBrowserErrors": 0,
+    "publicHttpChecks": [
+      {
+        "path": "/",
+        "status": 200,
+        "etag": "W/\"bddc61084764837b5c289f63d38fb6fb\"",
+        "contentType": "text/html; charset=utf-8",
+        "title": "Nijoow Drawing",
+        "editor": true
+      },
+      {
+        "path": "/_next/static/chunks/app/page-323a6e9f17f6426d.js",
+        "status": 200,
+        "etag": "W/\"43867f82ab00bdf3303d5928e94e88ad\"",
+        "contentType": "application/javascript; charset=utf-8"
+      },
+      {
+        "path": "/_next/static/chunks/7c257d50.88f4e559a1849ba8.js",
+        "status": 200,
+        "etag": "W/\"84ed22956ce2956267c05ae154a7b6ee\"",
+        "contentType": "application/javascript; charset=utf-8"
+      },
+      {
+        "path": "/_next/static/css/a9ad2ebb9a1d87c0.css",
+        "status": 200,
+        "etag": "W/\"eec0d8cd733458c4026484d4ddfb9ebe\"",
+        "contentType": "text/css; charset=utf-8"
+      }
+    ],
+    "remoteBrowser": "blocked by environment proxy before page load"
+  },
+  "recoveryBranch": "recovery/production-20261022",
+  "recoveryDoesNotChangeProduction": true
+}
