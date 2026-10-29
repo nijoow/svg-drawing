@@ -1,0 +1,363 @@
+{
+  "baseline": "2b6c07afa6e11bc13efdb52d29a2e37ce90ce12a",
+  "textFilesReviewed": 57,
+  "excluded": [
+    "src/app/favicon.ico",
+    "public static images/cursor assets",
+    "recovery/production archived generated artifacts",
+    ".yarn vendored dependencies and SDKs",
+    "generated .next outputs",
+    ".git internals",
+    "historical docs/evidence images"
+  ],
+  "files": [
+    {
+      "path": "src/app/favicon.ico",
+      "sha256": "2b8ad2d33455a8f736fc3a8ebf8f0bdea8848ad4c0db48a2833bd0f9cd775932",
+      "lines": null,
+      "review": "excluded binary favicon"
+    },
+    {
+      "path": "src/app/globals.css",
+      "sha256": "1e6c2e0722a8a78b5e07e28b702cc001ecbf2fdeabe0cbd905c2aec91139ee8f",
+      "lines": 144,
+      "review": "source read"
+    },
+    {
+      "path": "src/app/layout.tsx",
+      "sha256": "dc21dafd19f7519b46abf25f9b27dd7ba32678e0a5cc3dba4ef4678e3b343982",
+      "lines": 21,
+      "review": "source read"
+    },
+    {
+      "path": "src/app/page.tsx",
+      "sha256": "a37f90e0046c3034aa4dc112697bc5f94098528875fad00462a5e0bf143107ea",
+      "lines": 245,
+      "review": "source read"
+    },
+    {
+      "path": "src/components/Canvas/DrawingCanvas.tsx",
+      "sha256": "3b4f0eb245317ee45f1df44464375c742914626f52802e3bf972b5b2c7719e39",
+      "lines": 502,
+      "review": "source read"
+    },
+    {
+      "path": "src/components/Drawings/DrawingNode.tsx",
+      "sha256": "a4b186f6699ef9e035f253f67a12bc69b8f3c465121967bb48abbf48ce57e05c",
+      "lines": 39,
+      "review": "source read"
+    },
+    {
+      "path": "src/components/Drawings/Path.tsx",
+      "sha256": "3d57e576e1cefeb9c5d69703f1fb84f4b77a8652e9379eae5702687822a715f8",
+      "lines": 1,
+      "review": "source read"
+    },
+    {
+      "path": "src/components/Drawings/Spline.tsx",
+      "sha256": "3d57e576e1cefeb9c5d69703f1fb84f4b77a8652e9379eae5702687822a715f8",
+      "lines": 1,
+      "review": "source read"
+    },
+    {
+      "path": "src/components/Handler/Handler.tsx",
+      "sha256": "12e71f23098cf570669d8cb0afa5edb2efe7a6a0f7958fae7dc16a9f55fc1ad9",
+      "lines": 217,
+      "review": "source read"
+    },
+    {
+      "path": "src/components/Handler/MultiSelectionHandler.tsx",
+      "sha256": "212ffbff5a7e887b0f3ba151fe7ccbfc30412193691b10cd9cbbc172c1d8c09e",
+      "lines": 130,
+      "review": "source read"
+    },
+    {
+      "path": "src/components/Handler/SnapGuides.tsx",
+      "sha256": "7c12b2d86f117402cf6dc5149521879c7d848f267a8e8ac95b7b5fa86795b0db",
+      "lines": 24,
+      "review": "source read"
+    },
+    {
+      "path": "src/components/Handler/VertexHandler.tsx",
+      "sha256": "8e6e7a46d4bd0640ef0fdc79b9dc14d0e319f64c3c12599e2cbf358ae3a471a1",
+      "lines": 139,
+      "review": "source read"
+    },
+    {
+      "path": "src/components/Panels/ArtboardsPanel.tsx",
+      "sha256": "2da7bebaff120cbbbb16c7e596f630d81f15143615f8ad82a430d3dc0b471d2a",
+      "lines": 183,
+      "review": "source read"
+    },
+    {
+      "path": "src/components/Panels/LayersPanel.tsx",
+      "sha256": "55c7bda65a474a8bcd2bacb417a4c00f58f6eaaf1a8c0bc4eadd3c5641fd9272",
+      "lines": 290,
+      "review": "source read"
+    },
+    {
+      "path": "src/components/Panels/MediaProperties.tsx",
+      "sha256": "1d050afc718f0bd3477836dcb9f1fbbaa56a534986ff0b7ace302b22bd3dbff2",
+      "lines": 408,
+      "review": "source read"
+    },
+    {
+      "path": "src/components/Panels/PanelFields.tsx",
+      "sha256": "fdc9719d2b86b1144ce267cf706d9ba2a539798589f4077e266a12f741867cf6",
+      "lines": 172,
+      "review": "source read"
+    },
+    {
+      "path": "src/components/Panels/PropertiesPanel.tsx",
+      "sha256": "0ae28a441e5578553ee8584ad6dcf3c537b91dee8162e0d5d94e8a3e49b329f8",
+      "lines": 320,
+      "review": "source read"
+    },
+    {
+      "path": "src/components/Slider/Slider.tsx",
+      "sha256": "ed174165c8476bcffd694ef43f8b47dcc5e9a4116f9927d53c22ec99c8725576",
+      "lines": 85,
+      "review": "source read"
+    },
+    {
+      "path": "src/components/SplashScreen/SplashScreen.tsx",
+      "sha256": "658d07075c350d0a0efc6ee91d2773927da0c19f3570bcd7fb5876372b07cf59",
+      "lines": 45,
+      "review": "source read"
+    },
+    {
+      "path": "src/components/ToolBar/DocumentToolBar.tsx",
+      "sha256": "7c513cf130bb14703ddaf832ff9009a3ad3dff2eb9aa2a5ef8d73ea5920932e8",
+      "lines": 480,
+      "review": "source read"
+    },
+    {
+      "path": "src/components/ToolBar/SideToolBar.tsx",
+      "sha256": "e59d8214e8559bbf1712f058754700646b74e7008d430161d7d29182d024b420",
+      "lines": 247,
+      "review": "source read"
+    },
+    {
+      "path": "src/components/ToolBar/TopToolBar.tsx",
+      "sha256": "a0dbecaed324764a113fa91d3472e593d5ed1bb66c1d80fb064ab4820d546382",
+      "lines": 279,
+      "review": "source read"
+    },
+    {
+      "path": "src/components/ToolBar/VectorToolBar.tsx",
+      "sha256": "84a2b7a763645251b5404d0cc51fd6db5efc40f9f84a70a893a3af9a2882bb83",
+      "lines": 62,
+      "review": "source read"
+    },
+    {
+      "path": "src/components/ToolBar/VertexToolBar.tsx",
+      "sha256": "3d08096f8eb3603880cf727af968be630ad06ac898ac79366ab450e8daf4d6d4",
+      "lines": 142,
+      "review": "source read"
+    },
+    {
+      "path": "src/components/ToolBar/WorkspaceToolBar.tsx",
+      "sha256": "d28ff0010849d1aa1a0369629bcefd41e75a4a57b35b8e5e99b774f82f0fe92a",
+      "lines": 197,
+      "review": "source read"
+    },
+    {
+      "path": "src/components/common/VerticalDivider.tsx",
+      "sha256": "5a7dc8b6003f2ad4e2dcd7184da7f64757e270d27dacea789baafd66b9d93da6",
+      "lines": 7,
+      "review": "source read"
+    },
+    {
+      "path": "src/contexts/recoil.tsx",
+      "sha256": "e43cd49fc33dca53903cadf565934954d085326ddc5f5482d6da36f64a4c4bd4",
+      "lines": 13,
+      "review": "source read"
+    },
+    {
+      "path": "src/drawing/creation.ts",
+      "sha256": "100cd783a54252d113f44287167e511653bcaa993aa0ccec0cadbff02980a081",
+      "lines": 76,
+      "review": "source read"
+    },
+    {
+      "path": "src/editor/document.ts",
+      "sha256": "162ca4badd06e065263f4a5aa19bd2c7b1cf0824e4ed8bea665e5e0f54509df8",
+      "lines": 632,
+      "review": "source read"
+    },
+    {
+      "path": "src/editor/history.ts",
+      "sha256": "847ddc4026d1727d11aee2c011931fff4ca49d91116e0658645c18abe625e866",
+      "lines": 96,
+      "review": "source read"
+    },
+    {
+      "path": "src/editor/operations.ts",
+      "sha256": "2be630cbe838791aa9d0581e392f78c41da12c84fca43b97b17ed6a58fbbc50f",
+      "lines": 467,
+      "review": "source read"
+    },
+    {
+      "path": "src/editor/panelCommands.ts",
+      "sha256": "814e09af4626ce3116826b5a6a2b6eb07f1072188cf1076d2597f8514be16a31",
+      "lines": 103,
+      "review": "source read"
+    },
+    {
+      "path": "src/editor/renderDrawing.ts",
+      "sha256": "c5edca49728a3ec4ac8f8cdeb434c61ec363cb5a68904f66551e6f191901241d",
+      "lines": 158,
+      "review": "source read"
+    },
+    {
+      "path": "src/editor/useEditorActions.ts",
+      "sha256": "200d3bbaba368a4505e5e3042f7e30398052772adbb3d6b58b2770dd7aecefb2",
+      "lines": 180,
+      "review": "source read"
+    },
+    {
+      "path": "src/editor/viewBounds.ts",
+      "sha256": "5f70940cc7dbc003620e36711909a4c926280f34d0fbb1a314e2e6b4293731b7",
+      "lines": 28,
+      "review": "source read"
+    },
+    {
+      "path": "src/editor/viewport.ts",
+      "sha256": "de33a03df34e412b02a32a592b444d0e3c5b0579e4aa2331ced90b3ab3c9dcd6",
+      "lines": 41,
+      "review": "source read"
+    },
+    {
+      "path": "src/hooks/useEditorKeyboard.ts",
+      "sha256": "dcc84d4dad959570493781b1204652e8dfb12422a7461f069ccbfa74e36b5088",
+      "lines": 96,
+      "review": "source read"
+    },
+    {
+      "path": "src/hooks/useEditorPersistence.ts",
+      "sha256": "6dacef6fcba37ff5729b72389b727e33b8237217ee15a2c94da15352672b8d08",
+      "lines": 128,
+      "review": "source read"
+    },
+    {
+      "path": "src/hooks/useOverlaySelection.ts",
+      "sha256": "f49e5f9751251ba0cca6aa47de37c988e41512c74f23fa63c824c60301fa3b92",
+      "lines": 32,
+      "review": "source read"
+    },
+    {
+      "path": "src/hooks/usePointDrag.ts",
+      "sha256": "3105bf80ffff0cf306744ad883cf3db692b44b85b17aa0d8bae08897fb2adaa3",
+      "lines": 154,
+      "review": "source read"
+    },
+    {
+      "path": "src/hooks/useViewport.ts",
+      "sha256": "be86a9de63417ec3f1c575d349d2f3296484ff5e55f340680b42fb7f5c05b6e5",
+      "lines": 28,
+      "review": "source read"
+    },
+    {
+      "path": "src/media/frame.ts",
+      "sha256": "c8fc4b7a5bba068fb53939e6f52e1d4cad4d5794a8aedde497eedcabdc16dd84",
+      "lines": 73,
+      "review": "source read"
+    },
+    {
+      "path": "src/media/image.ts",
+      "sha256": "076b3e7673f615e949c737d7c8462b933acd3f675830a3027e6e935d0318726e",
+      "lines": 123,
+      "review": "source read"
+    },
+    {
+      "path": "src/media/text.ts",
+      "sha256": "49b13e4cfd0c590ad4c5802eb4a357a08ab83c7bdaef03e2eda0fc287329110c",
+      "lines": 92,
+      "review": "source read"
+    },
+    {
+      "path": "src/recoil/atoms.ts",
+      "sha256": "4af23afe4a516ff8aaf09c5ceacdaec369e6a5c74cddf9c4b76276ac61d8e7e7",
+      "lines": 134,
+      "review": "source read"
+    },
+    {
+      "path": "src/recoil/vertexSelection.ts",
+      "sha256": "e21e8d7560d00d44027934a0efed24ab7df5ee8d53c18608237a40f98b5da552",
+      "lines": 5,
+      "review": "source read"
+    },
+    {
+      "path": "src/types/type.ts",
+      "sha256": "d13d2ef43486021f35ab666ef83198ecbecf853ce9452f109b7bb4027cabc91d",
+      "lines": 112,
+      "review": "source read"
+    },
+    {
+      "path": "src/utils/drawingGeometry.ts",
+      "sha256": "8e22d0c9cc0a659a06a3da84c70272c39a4678a8bd0449ee1e34e625816fe162",
+      "lines": 282,
+      "review": "source read"
+    },
+    {
+      "path": "src/utils/getInformationFromSplinePaths.ts",
+      "sha256": "094f6f5fbc786c569a03a515b458077d34b1303feb1ba872aa33cf1d314f6c66",
+      "lines": 79,
+      "review": "source read"
+    },
+    {
+      "path": "src/utils/getInformationFromVertex.ts",
+      "sha256": "597b191353269db98b6ecde98c70607965b30e3f455610a8f3ed719da8bbbc23",
+      "lines": 19,
+      "review": "source read"
+    },
+    {
+      "path": "src/utils/getValueFromPoint.ts",
+      "sha256": "b285d0ee722f2ce1849cedb347befa79dc1adf5f38764896f417978be37f3d51",
+      "lines": 18,
+      "review": "source read"
+    },
+    {
+      "path": "src/utils/pathEditing.ts",
+      "sha256": "cb30cc4fa358a025dc59f5ee64f5462b94639798260289020c7f31a03120d729",
+      "lines": 224,
+      "review": "source read"
+    },
+    {
+      "path": "src/utils/remap.ts",
+      "sha256": "646acf3385403d1d92ea75b4caa515deffd92b416a5bc543f52bb681b35584ea",
+      "lines": 4,
+      "review": "source read"
+    },
+    {
+      "path": "src/utils/rotateVertex.ts",
+      "sha256": "3c7a5fa250533829dcaaf0b17b2da11d1ada6b6dceefcd014e31f988011ff97d",
+      "lines": 8,
+      "review": "source read"
+    },
+    {
+      "path": "src/utils/snapping.ts",
+      "sha256": "679a62dde7ad6e94dbbff93fcd4940ad8b64d3f2915c4892f03a463818388d1a",
+      "lines": 65,
+      "review": "source read"
+    },
+    {
+      "path": "src/vector/boolean.ts",
+      "sha256": "4113ea5cddec66bd5e2d80c682e3e0cd634baacba796c7cc472c08380a3eacc1",
+      "lines": 133,
+      "review": "source read"
+    },
+    {
+      "path": "src/vector/export.ts",
+      "sha256": "60a7e962362f1e600a9c4fe99758cf119f8bab32761a04a727cf84a2fe9a41a7",
+      "lines": 161,
+      "review": "source read"
+    },
+    {
+      "path": "src/vector/importSvg.ts",
+      "sha256": "43afe233891be34d92dbf6e3e2397d22c56d5be89bb9787072ba9c8d975d0370",
+      "lines": 431,
+      "review": "source read"
+    }
+  ]
+}

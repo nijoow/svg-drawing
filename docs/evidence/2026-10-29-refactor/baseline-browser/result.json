@@ -1,0 +1,17 @@
+{
+  "base": "http://127.0.0.1:4327",
+  "status": "passed",
+  "checks": [
+    "draw/select",
+    "numeric rotate/resize",
+    "undo/redo retains selection",
+    "stroke/fill",
+    "pointer and keyboard move",
+    "save/open project roundtrip",
+    "corrupt file preserves document",
+    "SVG export",
+    "autosave restore",
+    "390px closed default and bounded sheet"
+  ],
+  "browserErrors": []
+}
