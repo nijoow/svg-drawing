@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "id": "fbf867fd-e3d1-41e2-bedb-f70db054d598",
+  "name": "Untitled",
+  "canvas": { "width": 1600, "height": 900 },
+  "drawings": [
+    {
+      "id": "d2012386-2c1f-4fd5-96ce-37da59dff9b7",
+      "type": "POLYGON",
+      "subType": null,
+      "vertexs": [
+        { "id": "382cdc4d-c002-4a60-9cc9-74420f865a60", "x": 367.2564434701785, "y": 270.0480947161671, "type": "L" },
+        { "id": "e6ed11ed-2e11-4f62-875a-612b9a50cc50", "x": 292.2564434701786, "y": 399.9519052838329, "type": "L" },
+        { "id": "dc09ea76-c18a-4bb4-a104-b0ebf832df45", "x": 534.7435565298215, "y": 539.951905283833, "type": "L" },
+        { "id": "56e39ef3-7f2a-43cf-a19f-b4ba1efa2d7a", "x": 609.7435565298214, "y": 410.0480947161671, "type": "L" }
+      ],
+      "width": 280,
+      "height": 150,
+      "center": { "x": 451, "y": 405 },
+      "rotate": 30,
+      "fill": "#2288cc",
+      "stroke": "#000000",
+      "strokeWidth": 4,
+      "opacity": 1,
+      "name": "Rectangle"
+    }
+  ],
+  "groups": [],
+  "artboards": []
+}

@@ -6,6 +6,7 @@ import { IoShapes, IoSquare, IoTriangle, IoEllipse, IoNavigate, IoHandLeftOutlin
 import { useRecoilState } from 'recoil'
 import { modeAtom } from '@/recoil/atoms'
 import { SubToolBar } from '@/types/type'
+import { isTextInput } from '@/editor/keyboard'
 
 export default function SideToolBar({ onImportImage }: { onImportImage: () => void }) {
   const [mode, setMode] = useRecoilState(modeAtom)
@@ -21,15 +22,13 @@ export default function SideToolBar({ onImportImage }: { onImportImage: () => vo
       }
     }
     const handleKeyDown = (event: KeyboardEvent) => {
-      const target = event.target
       if (
         event.isComposing ||
         event.keyCode === 229 ||
         event.ctrlKey ||
         event.metaKey ||
         event.altKey ||
-        (target instanceof HTMLElement &&
-          (target.isContentEditable || target.closest('input, textarea, select, [contenteditable="true"]')))
+        isTextInput(event.target)
       )
         return
       if (event.key === 'Escape') setOpenSubToolBar({ type: null })
@@ -78,6 +77,19 @@ export default function SideToolBar({ onImportImage }: { onImportImage: () => vo
       role="toolbar"
       aria-label="Drawing tools"
     >
+      <button
+        type="button"
+        title="Rectangle"
+        aria-label="Draw rectangle"
+        aria-pressed={mode.type === 'SHAPE' && mode.subType === 'RECTANGLE'}
+        className="flex w-full items-center justify-center py-2 hover:text-sky-300"
+        onClick={() => {
+          setMode({ type: 'SHAPE', subType: 'RECTANGLE' })
+          setOpenSubToolBar({ type: null })
+        }}
+      >
+        <IoSquare size={20} />
+      </button>
       <button
         type="button"
         title="Select (V)"

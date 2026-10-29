@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
-import { documentState, editorErrorState, gridAtom, modeAtom, selectedDrawingsState, snapAtom } from '@/recoil/atoms'
+import { useRecoilState, useRecoilValue } from 'recoil'
+import { documentState, gridAtom, modeAtom, selectedDrawingsState, snapAtom } from '@/recoil/atoms'
 import SideToolBar from '@/components/ToolBar/SideToolBar'
 import TopToolBar from '@/components/ToolBar/TopToolBar'
 import DocumentToolBar from '@/components/ToolBar/DocumentToolBar'
@@ -15,27 +15,20 @@ import ArtboardsPanel from '@/components/Panels/ArtboardsPanel'
 import MediaProperties from '@/components/Panels/MediaProperties'
 import DrawingCanvas from '@/components/Canvas/DrawingCanvas'
 import { useViewport } from '@/hooks/useViewport'
-import { useEditorActions } from '@/editor/useEditorActions'
 import { getViewBounds } from '@/editor/viewBounds'
 import { useEditorKeyboard } from '@/hooks/useEditorKeyboard'
-import { importImageFile } from '@/media/image'
-import { appendImportedSvg, importSvg } from '@/vector/importSvg'
-import type { Position } from '@/drawing/creation'
+import { useArtworkImport } from '@/hooks/useArtworkImport'
 
 export default function Home() {
   const document = useRecoilValue(documentState)
-  const [mode, setMode] = useRecoilState(modeAtom)
+  const mode = useRecoilValue(modeAtom)
   const selection = useRecoilValue(selectedDrawingsState)
   const [grid, setGrid] = useRecoilState(gridAtom)
   const [snap, setSnap] = useRecoilState(snapAtom)
-  const setError = useSetRecoilState(editorErrorState)
-  const actions = useEditorActions()
-  const { viewport, setViewport, screenToDocument, zoomAt, fitToDrawing } = useViewport()
+  const { viewport, setViewport, zoomAt, fitToDrawing } = useViewport()
   const [panel, setPanel] = useState<'Layers' | 'Properties' | 'Artboards' | null>(null)
-  const [importing, setImporting] = useState(false)
+  const { importArtwork, importing } = useArtworkImport((kind) => setPanel(kind === 'svg' ? 'Layers' : 'Properties'))
   const fileInput = useRef<HTMLInputElement>(null)
-  const currentDocumentId = useRef(document.id)
-  currentDocumentId.current = document.id
   const spacePressed = useEditorKeyboard()
 
   useEffect(() => {
@@ -43,60 +36,34 @@ export default function Home() {
   }, [])
 
   const fit = () => {
-    fitToDrawing(getViewBounds(document), window.innerWidth - (panel ? 280 : 0), window.innerHeight)
-  }
-
-  const importImage = async (file: File, position?: Position) => {
-    const id = document.id
-    setImporting(true)
-    try {
-      if (file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg')) {
-        if (file.size > 10 * 1024 * 1024) throw new Error('SVG files must be smaller than 10 MB.')
-        const drawings = await importSvg(await file.text())
-        if (currentDocumentId.current !== id) return
-        actions.updateDocument(
-          (previous) => appendImportedSvg(previous, drawings),
-          drawings.map((drawing) => drawing.id),
-        )
-        setMode({ type: 'SELECT', subType: 'SHAPE' })
-        setPanel('Layers')
-        return
-      }
-      const drawing = await importImageFile(
-        file,
-        position ?? screenToDocument({ x: window.innerWidth / 2, y: window.innerHeight / 2 }),
-      )
-      if (currentDocumentId.current !== id) return
-      actions.updateDocument((previous) => ({ ...previous, drawings: [...previous.drawings, drawing] }), [drawing.id])
-      setMode({ type: 'SELECT', subType: 'SHAPE' })
-      setPanel('Properties')
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Could not import the image.')
-    } finally {
-      setImporting(false)
-    }
+    const narrow = window.innerWidth <= 1100
+    fitToDrawing(
+      getViewBounds(document),
+      window.innerWidth - (panel && !narrow ? 280 : 0),
+      window.innerHeight - (panel && narrow ? Math.min(window.innerHeight * 0.42, 360) + 116 : 0),
+    )
   }
 
   return (
     <main className="relative h-full w-full overflow-hidden bg-white" aria-label="Drawing editor">
       <DrawingCanvas
         spacePressed={spacePressed}
-        onImportImage={importImage}
+        onImportImage={importArtwork}
         onEditText={() => setPanel('Properties')}
       />
       <DocumentToolBar />
-      <TopToolBar />
+      {selection.length === 0 && <TopToolBar />}
       <SideToolBar onImportImage={() => fileInput.current?.click()} />
       <input
         ref={fileInput}
         className="hidden"
         type="file"
-        accept="image/png,image/jpeg,image/webp"
+        accept="image/png,image/jpeg,image/webp,image/svg+xml,.svg"
         aria-label="Import image file"
         onChange={(event) => {
           const file = event.target.files?.[0]
           event.target.value = ''
-          if (file) void importImage(file)
+          if (file) void importArtwork(file)
         }}
       />
       <div
@@ -109,6 +76,8 @@ export default function Home() {
             key={name}
             type="button"
             aria-pressed={panel === name}
+            aria-expanded={panel === name}
+            aria-controls="editor-panel"
             className={`rounded px-2 py-2 ${panel === name ? 'bg-gray-500 text-sky-200' : 'hover:bg-gray-500'}`}
             onClick={() => setPanel(panel === name ? null : name)}
           >
@@ -118,11 +87,11 @@ export default function Home() {
       </div>
       {panel && (
         <aside
+          id="editor-panel"
           aria-label={`${panel} panel`}
           className="editor-panel fixed right-4 top-16 z-20 max-h-[calc(100%-10rem)] w-[264px] overflow-y-auto rounded-xl border border-gray-500 bg-gray-600/95 p-3 text-sm text-white shadow-lg backdrop-blur"
         >
           <div className="mb-1 flex items-center justify-end">
-            <h2 className="sr-only">{panel}</h2>
             <button
               type="button"
               aria-label="Close panel"
@@ -142,6 +111,29 @@ export default function Home() {
           {panel === 'Artboards' && <ArtboardsPanel />}
         </aside>
       )}
+      <div
+        className="tool-status fixed left-4 top-[140px] z-10 rounded-lg bg-gray-600 px-3 py-2 text-xs text-white"
+        role="status"
+      >
+        {mode.type === 'SELECT'
+          ? mode.subType === 'VERTEX'
+            ? 'Edit points · A'
+            : 'Select · V'
+          : mode.type === 'SHAPE'
+          ? `${mode.subType?.toLowerCase()} · drag to draw`
+          : mode.type === 'PENCIL'
+          ? 'Pencil · N'
+          : mode.type === 'VERTEX'
+          ? 'Pen · P'
+          : mode.type === 'TEXT'
+          ? 'Text · T'
+          : 'Pan · H'}
+        {selection.length > 0 && (
+          <button type="button" className="ml-3 underline" onClick={() => setPanel('Properties')}>
+            Edit {selection.length === 1 ? 'object' : `${selection.length} objects`}
+          </button>
+        )}
+      </div>
       <WorkspaceToolBar />
       <div className="context-tools fixed bottom-[72px] left-1/2 z-20 max-w-[calc(100%-2rem)] -translate-x-1/2 rounded-lg bg-gray-600 text-white shadow-sm">
         {selection.length > 1 && <VectorToolBar />}

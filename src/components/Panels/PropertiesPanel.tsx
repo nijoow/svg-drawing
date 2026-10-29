@@ -14,7 +14,7 @@ export default function PropertiesPanel() {
   const drawing = selected[0]
   if (!drawing)
     return (
-      <section aria-label="Properties panel" className="space-y-3 text-white">
+      <section aria-label="Object properties" className="space-y-3 text-white">
         <h2 className="text-sm font-medium">Properties</h2>
         <p className="py-6 text-center text-xs leading-5 text-gray-300">
           Select an object to adjust its size,
@@ -49,11 +49,11 @@ export default function PropertiesPanel() {
     setGradient({ ...gradient, stops })
   }
   return (
-    <section key={drawing.id} aria-label="Properties panel" className="space-y-4 text-white">
+    <section key={drawing.id} aria-label="Object properties" className="space-y-4 text-white">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-medium">Properties</h2>
         <span className="text-xs text-gray-300">
-          {selected.length === 1 ? drawing.type.toLowerCase() : `${selected.length} selected`}
+          {selected.length === 1 ? drawing.name || drawing.type.toLowerCase() : `${selected.length} selected`}
         </span>
       </div>
       {selected.length === 1 && (
@@ -105,7 +105,51 @@ export default function PropertiesPanel() {
           </div>
         </>
       )}
-      <div className="space-y-2 border-t border-gray-500 pt-3">
+      <div className="space-y-3 border-t border-gray-500 pt-3">
+        <h3 className="text-xs font-medium">Appearance</h3>
+        {(['fill', 'stroke'] as const).map((field) => (
+          <div key={field} className="flex items-center justify-between gap-2 text-xs">
+            <span>{field === 'fill' ? 'Fill color' : 'Stroke color'}</span>
+            <div className="flex items-center gap-2">
+              <ColorField
+                label={field === 'fill' ? 'Object fill color' : 'Object stroke color'}
+                value={drawing[field]}
+                onCommit={(color) =>
+                  actions.patchSelection(field === 'fill' ? { fill: color, gradient: undefined } : { stroke: color })
+                }
+              />
+              <button
+                type="button"
+                className={panelButton}
+                aria-pressed={['none', 'transparent'].includes(drawing[field])}
+                onClick={() =>
+                  actions.patchSelection(field === 'fill' ? { fill: 'none', gradient: undefined } : { stroke: 'none' })
+                }
+              >
+                None
+              </button>
+            </div>
+          </div>
+        ))}
+        <NumberField
+          label="Stroke width"
+          value={drawing.strokeWidth}
+          min={0}
+          max={1000}
+          onCommit={(strokeWidth) => actions.patchSelection({ strokeWidth })}
+        />
+        {selected.length > 1 && (
+          <>
+            <p className="text-xs text-gray-300">Appearance changes apply to all selected objects.</p>
+            <NumberField
+              label="Opacity %"
+              value={drawing.opacity * 100}
+              min={0}
+              max={100}
+              onCommit={(value) => actions.patchSelection({ opacity: value / 100 })}
+            />
+          </>
+        )}
         <label className="flex items-center justify-between gap-2 text-xs">
           <span>Fill</span>
           <select
@@ -205,51 +249,54 @@ export default function PropertiesPanel() {
           </>
         )}
       </div>
-      <label className="flex items-center justify-between gap-2 text-xs">
-        <span>Blend</span>
-        <select
-          aria-label="Blend mode"
-          className={`${panelInput} !w-32`}
-          value={drawing.blendMode || 'normal'}
-          onChange={(event) => actions.patchSelection({ blendMode: event.target.value as Drawing['blendMode'] })}
-        >
-          {['normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten'].map((mode) => (
-            <option key={mode} value={mode}>
-              {mode.charAt(0).toUpperCase() + mode.slice(1)}
-            </option>
-          ))}
-        </select>
-      </label>
-      <div className="space-y-2 border-t border-gray-500 pt-3">
-        <h3 className="text-xs font-medium">Clipping mask</h3>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            className={panelButton}
-            disabled={!source}
-            onClick={() => {
-              actions.updateDocument(
-                (current) => applySelectionMask(current, ids),
-                ids.filter((id) => id !== source?.id),
-              )
-            }}
+      <details className="space-y-3 border-t border-gray-500 pt-3">
+        <summary className="cursor-pointer text-xs font-medium">Advanced appearance</summary>
+        <label className="flex items-center justify-between gap-2 text-xs">
+          <span>Blend</span>
+          <select
+            aria-label="Blend mode"
+            className={`${panelInput} !w-32`}
+            value={drawing.blendMode || 'normal'}
+            onChange={(event) => actions.patchSelection({ blendMode: event.target.value as Drawing['blendMode'] })}
           >
-            Create mask
-          </button>
-          <button
-            type="button"
-            className={panelButton}
-            disabled={!selected.some((item) => item.clip)}
-            onClick={() => actions.patchSelection({ clip: undefined })}
-          >
-            Release
-          </button>
+            {['normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten'].map((mode) => (
+              <option key={mode} value={mode}>
+                {mode.charAt(0).toUpperCase() + mode.slice(1)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="space-y-2 border-t border-gray-500 pt-3">
+          <h3 className="text-xs font-medium">Clipping mask</h3>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className={panelButton}
+              disabled={!source}
+              onClick={() => {
+                actions.updateDocument(
+                  (current) => applySelectionMask(current, ids),
+                  ids.filter((id) => id !== source?.id),
+                )
+              }}
+            >
+              Create mask
+            </button>
+            <button
+              type="button"
+              className={panelButton}
+              disabled={!selected.some((item) => item.clip)}
+              onClick={() => actions.patchSelection({ clip: undefined })}
+            >
+              Release
+            </button>
+          </div>
+          <p className="text-[11px] leading-4 text-gray-300">
+            Select objects and a closed shape above them. The top shape becomes their mask. Undo restores the source
+            shape.
+          </p>
         </div>
-        <p className="text-[11px] leading-4 text-gray-300">
-          Select objects and a closed shape above them. The top shape becomes their mask. Undo restores the source
-          shape.
-        </p>
-      </div>
+      </details>
       {document.artboards.length > 0 && (
         <label className="flex flex-col gap-1 text-xs">
           Artboard

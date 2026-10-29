@@ -1,0 +1,15 @@
+{
+  "deploymentId": "dpl_KphCvkjF1prxcdG7hhmDMwaE6Cgf",
+  "url": "https://nijoow-drawing.vercel.app",
+  "deploymentUrl": "https://nijoow-drawing-yd9pe6594-nijoows-projects.vercel.app",
+  "sourceCommit": "6d6bcfd236c1b5d7558a8b083112921f416db6d1",
+  "state": "READY",
+  "target": "production",
+  "aliasConfirmed": true,
+  "productionBrowser": "blocked before page load",
+  "curlError": "CONNECT tunnel failed, response 403",
+  "playwrightError": "net::ERR_TUNNEL_CONNECTION_FAILED",
+  "localStaticBrowser": "passed",
+  "remoteTopLevelDigestMatches": ["index.html", "index.txt", "404.html", "favicon.ico"],
+  "runtimeErrorLogs": "no entries; static app, not proof of no client errors"
+}

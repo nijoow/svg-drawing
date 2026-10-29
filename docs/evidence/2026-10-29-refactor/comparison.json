@@ -1,0 +1,25 @@
+{
+  "desktop.png": {
+    "sameDimensions": true,
+    "identicalPixels": false,
+    "differenceBounds": [
+      17,
+      53,
+      1427,
+      997
+    ]
+  },
+  "mobile-390.png": {
+    "sameDimensions": true,
+    "identicalPixels": false,
+    "differenceBounds": [
+      3,
+      65,
+      387,
+      841
+    ]
+  },
+  "savedProject": {
+    "equalExceptGeneratedIds": true
+  }
+}
