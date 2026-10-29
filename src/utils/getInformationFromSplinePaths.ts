@@ -2,12 +2,6 @@ import { getInformationFromVertexs } from './getInformationFromVertex'
 
 type SplinePoint = { x: number; y: number }
 
-type ControlPoints = {
-  current: SplinePoint
-  previous?: SplinePoint
-  next?: SplinePoint
-}
-
 export const line = (pointA: SplinePoint, pointB: SplinePoint) => {
   const lengthX = pointB.x - pointA.x
   const lengthY = pointB.y - pointA.y
@@ -18,57 +12,16 @@ export const line = (pointA: SplinePoint, pointB: SplinePoint) => {
   }
 }
 
-const controlPoint = (controlPoints: ControlPoints): [number, number] => {
-  const { current, next, previous } = controlPoints
-
-  const p = previous || current
-  const n = next || current
-
-  const smoothing = 0.2
-
-  const o = line(p, n)
-
-  const angle = o.angle
-  const length = o.length * smoothing
-
-  const x = current.x + Math.cos(angle) * length
-  const y = current.y + Math.sin(angle) * length
-
-  return [x, y]
-}
+/** One smoothing rule for live pencil previews, document paths and editable handles. */
+export const splineControlPoint = (current: SplinePoint, previous = current, next = current): SplinePoint => ({
+  x: current.x + (next.x - previous.x) * 0.2,
+  y: current.y + (next.y - previous.y) * 0.2,
+})
 
 export const bezierCommand = (point: SplinePoint, i: number, a: SplinePoint[]): string => {
-  let cpsX: number
-  let cpsY: number
-
-  switch (i) {
-    case 0:
-      ;[cpsX, cpsY] = controlPoint({
-        current: point,
-      })
-      break
-    case 1:
-      ;[cpsX, cpsY] = controlPoint({
-        current: a[i - 1],
-        next: point,
-      })
-      break
-    default:
-      ;[cpsX, cpsY] = controlPoint({
-        current: a[i - 1],
-        previous: a[i - 2],
-        next: point,
-      })
-      break
-  }
-
-  const [cpeX, cpeY] = controlPoint({
-    current: point,
-    previous: a[i - 1],
-    next: a[i + 1],
-  })
-
-  return `C ${cpsX},${cpsY} ${cpeX},${cpeY} ${point.x}, ${point.y}`
+  const start = i === 0 ? splineControlPoint(point) : splineControlPoint(a[i - 1], a[i - 2], point)
+  const end = splineControlPoint(point, a[i - 1], a[i + 1])
+  return `C ${start.x},${start.y} ${end.x},${end.y} ${point.x}, ${point.y}`
 }
 
 export const getSvgInformationFromPath = (paths: SplinePoint[]) => {

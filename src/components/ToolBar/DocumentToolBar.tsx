@@ -13,8 +13,9 @@ import {
 import { useEditorActions } from '@/editor/useEditorActions'
 import { useEditorPersistence } from '@/hooks/useEditorPersistence'
 import { documentState, editorErrorState, historyState } from '@/recoil/atoms'
-import { appendImportedSvg, importSvg } from '@/vector/importSvg'
+import { appendImportedSvg, importSvgFile } from '@/vector/importSvg'
 import { exportPng, exportReactComponent } from '@/vector/export'
+import { isTextInput } from '@/editor/keyboard'
 
 const buttonClass =
   'flex items-center justify-center rounded-md p-2 hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-300 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent'
@@ -40,13 +41,6 @@ function safeFilename(name: string) {
       .replace(/[<>:"/\\|?*\u0000-\u001f]/g, '_')
       .trim()
       .slice(0, 100) || 'Untitled'
-  )
-}
-
-function isTextInput(target: EventTarget | null) {
-  return (
-    target instanceof HTMLElement &&
-    (target.isContentEditable || !!target.closest('input, textarea, select, [contenteditable="true"]'))
   )
 }
 
@@ -170,8 +164,7 @@ export default function DocumentToolBar() {
     setMenuOpen(false)
     setOpening(true)
     try {
-      if (file.size > MAX_DOCUMENT_BYTES) throw new Error('SVG files must be smaller than 10 MB.')
-      const drawings = await importSvg(await file.text())
+      const drawings = await importSvgFile(file)
       if (currentTransaction.current) throw new Error('Finish the current edit before importing an SVG.')
       updateDocument(
         (current) => appendImportedSvg(current, drawings),

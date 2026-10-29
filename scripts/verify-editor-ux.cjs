@@ -8,7 +8,10 @@ const path = require('node:path')
   const base = process.env.BASE_URL || 'http://localhost:4313'
   const output = process.env.EVIDENCE_DIR || '/tmp/svg-ux-evidence'
   await fs.mkdir(output, { recursive: true })
-  const browser = await chromium.launch({ executablePath: '/usr/bin/chromium', headless: true, args: ['--no-sandbox'] })
+  const browser = await chromium.launch({
+    executablePath: process.env.CHROMIUM_EXECUTABLE_PATH || undefined,
+    headless: true,
+  })
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } })
   const errors = []
   page.on('pageerror', (error) => errors.push(error.message))
