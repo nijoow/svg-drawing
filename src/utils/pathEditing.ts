@@ -1,5 +1,6 @@
 import { Drawing, Vertex } from '@/types/type'
 import { Position, recalculateDrawingBounds } from './drawingGeometry'
+import { splineControlPoint } from './getInformationFromSplinePaths'
 
 const newId = () => globalThis.crypto?.randomUUID?.() ?? `vertex-${Date.now()}-${Math.random().toString(36).slice(2)}`
 const closedPath = (drawing: Drawing) => drawing.type === 'POLYGON' || drawing.type === 'ELLIPSE'
@@ -53,23 +54,20 @@ const explicitCurves = (vertices: Vertex[], closed: boolean): Vertex[] => {
 export const convertSplineToPath = (drawing: Drawing): Drawing => {
   if (drawing.type !== 'SPLINE') return drawing
   const vertices = drawing.vertexs
-  const control = (current: Position, previous: Position, next: Position): Position => ({
-    x: current.x + (next.x - previous.x) * 0.2,
-    y: current.y + (next.y - previous.y) * 0.2,
-  })
   return recalculateDrawingBounds({
     ...drawing,
     type: 'PATH',
-    vertexs: vertices.map(
-      (vertex, index): Vertex => ({
+    vertexs: vertices.map((vertex, index): Vertex => {
+      const control = splineControlPoint(vertex, vertices[index - 1], vertices[index + 1])
+      return {
         ...vertex,
         type: index === 0 ? 'M' : 'C',
-        currentHandlerX: control(vertex, vertices[index - 1] ?? vertex, vertices[index + 1] ?? vertex).x,
-        currentHandlerY: control(vertex, vertices[index - 1] ?? vertex, vertices[index + 1] ?? vertex).y,
-        nextHandlerX: control(vertex, vertices[index - 1] ?? vertex, vertices[index + 1] ?? vertex).x,
-        nextHandlerY: control(vertex, vertices[index - 1] ?? vertex, vertices[index + 1] ?? vertex).y,
-      }),
-    ),
+        currentHandlerX: control.x,
+        currentHandlerY: control.y,
+        nextHandlerX: control.x,
+        nextHandlerY: control.y,
+      }
+    }),
   })
 }
 

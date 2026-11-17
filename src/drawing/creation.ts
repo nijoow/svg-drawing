@@ -63,6 +63,7 @@ export function createShape(kind: ShapeKind, start: Position, end: Position, opt
 
   return {
     id: uuid(),
+    name: kind === 'RECTANGLE' ? 'Rectangle' : kind === 'TRIANGLE' ? 'Triangle' : 'Ellipse',
     type: kind === 'ELLIPSE' ? 'ELLIPSE' : 'POLYGON',
     subType: null,
     vertexs,

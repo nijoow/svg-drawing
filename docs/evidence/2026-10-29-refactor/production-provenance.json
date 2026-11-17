@@ -1,0 +1,11 @@
+{
+  "checkedDate": "2026-10-29",
+  "alias": "nijoow-drawing.vercel.app",
+  "deploymentId": "dpl_KphCvkjF1prxcdG7hhmDMwaE6Cgf",
+  "readyState": "READY",
+  "target": "production",
+  "githubCommitSha": "6d6bcfd236c1b5d7558a8b083112921f416db6d1",
+  "pr7Head": "2b6c07afa6e11bc13efdb52d29a2e37ce90ce12a",
+  "gitDiffProductionToPrHead": "documentation/evidence only; src, package.json, yarn.lock and next.config.js identical",
+  "evidenceSource": "Vercel get_deployment by production alias and local Git comparison; deployment bytes not rehashed"
+}

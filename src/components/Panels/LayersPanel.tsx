@@ -221,7 +221,7 @@ export default function LayersPanel() {
     })
   }
   return (
-    <section className="space-y-3 text-white" aria-label="Layers panel">
+    <section className="space-y-3 text-white" aria-label="Layer list controls">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-medium">Layers</h2>
         <span className="text-xs text-gray-300">{document.drawings.length} objects</span>

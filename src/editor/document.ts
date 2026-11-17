@@ -1,5 +1,6 @@
 import type { Drawing, Vertex } from '../types/type'
 import { renderDrawingMarkup } from './renderDrawing'
+import { splineControlPoint } from '../utils/getInformationFromSplinePaths'
 
 export const DOCUMENT_VERSION = 2
 export const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024
@@ -467,10 +468,6 @@ export function serializeDocument(doc: EditorDocument): string {
 type Position = { x: number; y: number }
 type PathCommand = { type: 'M' | 'L' | 'C' | 'S' | 'Z'; points: Position[] }
 
-function control(current: Position, previous = current, next = current): Position {
-  return { x: current.x + (next.x - previous.x) * 0.2, y: current.y + (next.y - previous.y) * 0.2 }
-}
-
 function contourCommands(vertices: Vertex[], type: Drawing['type']): PathCommand[] {
   if (!vertices.length || vertices.some((v) => !Number.isFinite(v.x) || !Number.isFinite(v.y))) return []
   if (type === 'SPLINE') {
@@ -480,8 +477,8 @@ function contourCommands(vertices: Vertex[], type: Drawing['type']): PathCommand
       return {
         type: 'C',
         points: [
-          control(previous, vertices[index - 2] ?? previous, vertex),
-          control(vertex, previous, vertices[index + 1] ?? vertex),
+          splineControlPoint(previous, vertices[index - 2], vertex),
+          splineControlPoint(vertex, previous, vertices[index + 1]),
           vertex,
         ],
       }

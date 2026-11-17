@@ -1,0 +1,20 @@
+{
+  "base": "http://127.0.0.1:4327",
+  "status": "passed",
+  "checks": [
+    "three repeated transform Escape cancellations preserve geometry",
+    "window blur cancels transform transaction",
+    "document and numeric drafts cancel without canvas shortcuts",
+    "empty/plaintext/true contenteditable retain text editing and selection",
+    "pencil preview equals committed curve across three undo/redo cycles",
+    "pencil-to-editable conversion preserves displayed curve",
+    "Escape discards unfinished pencil stroke",
+    "out-of-order concurrent imports both complete; pending status covers all reads",
+    "same file can be imported repeatedly through real file input",
+    "document replacement rejects stale import results and stale errors",
+    "toolbar import shares parser; active SVG rejection preserves artwork",
+    "raster import retains image properties entry point",
+    "imported vector and raster survive autosave reload"
+  ],
+  "browserErrors": []
+}

@@ -1,0 +1,490 @@
+TAP version 13
+# Subtest: shape creation accepts the zero coordinate and rejects a click or nonfinite input
+ok 1 - shape creation accepts the zero coordinate and rejects a click or nonfinite input
+  ---
+  duration_ms: 0.972041
+  ...
+# Subtest: ellipse geometry is independent of drag direction and all handles stay inside its bounds
+ok 2 - ellipse geometry is independent of drag direction and all handles stay inside its bounds
+  ---
+  duration_ms: 0.251666
+  ...
+# Subtest: the 1000-drawing boundary is accepted; a rejected addition preserves the previous document and history
+ok 3 - the 1000-drawing boundary is accepted; a rejected addition preserves the previous document and history
+  ---
+  duration_ms: 53.09625
+  ...
+# Subtest: the 100000-vertex boundary stays saveable and a following stroke is rejected
+ok 4 - the 100000-vertex boundary stays saveable and a following stroke is rejected
+  ---
+  duration_ms: 443.870584
+  ...
+# Subtest: a transform beyond coordinate limits is previewed, then rolled back at commit without losing redo
+ok 5 - a transform beyond coordinate limits is previewed, then rolled back at commit without losing redo
+  ---
+  duration_ms: 0.363667
+  ...
+# Subtest: invalid non-gesture style edits and oversized document bytes never enter history
+ok 6 - invalid non-gesture style edits and oversized document bytes never enter history
+  ---
+  duration_ms: 75.731583
+  ...
+# Subtest: a rejected replacement leaves even an active editing session untouched
+ok 7 - a rejected replacement leaves even an active editing session untouched
+  ---
+  duration_ms: 1.258458
+  ...
+# Subtest: version 1 documents migrate without changing geometry and save back as version 2
+ok 8 - version 1 documents migrate without changing geometry and save back as version 2
+  ---
+  duration_ms: 1.825416
+  ...
+# Subtest: nested groups, artboards and metadata round-trip; dangling references and group cycles are rejected
+ok 9 - nested groups, artboards and metadata round-trip; dangling references and group cycles are rejected
+  ---
+  duration_ms: 28.645791
+  ...
+# Subtest: compound contours and masks retain holes, reject duplicate anchor IDs and contribute to the bounds
+ok 10 - compound contours and masks retain holes, reject duplicate anchor IDs and contribute to the bounds
+  ---
+  duration_ms: 1.441791
+  ...
+# Subtest: hidden objects do not affect artwork exports; an artboard export uses its exact rectangle
+ok 11 - hidden objects do not affect artwork exports; an artboard export uses its exact rectangle
+  ---
+  duration_ms: 0.551292
+  ...
+# Subtest: gradient, blend and non-destructive filters survive round-trip and use bounded SVG filter regions
+ok 12 - gradient, blend and non-destructive filters survive round-trip and use bounded SVG filter regions
+  ---
+  duration_ms: 0.783125
+  ...
+# Subtest: multiline Korean text is escaped, positioned and transformed while native text stays editable
+ok 13 - multiline Korean text is escaped, positioned and transformed while native text stays editable
+  ---
+  duration_ms: 0.575417
+  ...
+# Subtest: raster crop export is self-contained and rejects active content or misleading image dimensions
+ok 14 - raster crop export is self-contained and rejects active content or misleading image dimensions
+  ---
+  duration_ms: 27.084209
+  ...
+# Subtest: PNG intrinsic dimensions are checked before trusting a small declared pixel count
+ok 15 - PNG intrinsic dimensions are checked before trusting a small declared pixel count
+  ---
+  duration_ms: 9.16875
+  ...
+# Subtest: SVG coordinate optimization never rounds opacity, crop ratios or small native scale to zero
+ok 16 - SVG coordinate optimization never rounds opacity, crop ratios or small native scale to zero
+  ---
+  duration_ms: 4.867833
+  ...
+# Subtest: reflected media retains its signed geometry in SVG and on-screen rendering
+ok 17 - reflected media retains its signed geometry in SVG and on-screen rendering
+  ---
+  duration_ms: 3.304042
+  ...
+# Subtest: shared SVG canvas uses the same markup with hit markers, hides objects and prevents selecting locked artwork
+ok 18 - shared SVG canvas uses the same markup with hit markers, hides objects and prevents selecting locked artwork
+  ---
+  duration_ms: 0.627583
+  ...
+# Subtest: document round-trips metadata, degenerate geometry, style and object order
+ok 19 - document round-trips metadata, degenerate geometry, style and object order
+  ---
+  duration_ms: 1.68925
+  ...
+# Subtest: loading rejects corrupt or unsupported data before returning a document
+ok 20 - loading rejects corrupt or unsupported data before returning a document
+  ---
+  duration_ms: 0.752167
+  ...
+# Subtest: import strips unrecognized fields and rejects external or injected paint
+ok 21 - import strips unrecognized fields and rejects external or injected paint
+  ---
+  duration_ms: 0.218666
+  ...
+# Subtest: SVG is standalone, escapes title and crops to artwork including strokes
+ok 22 - SVG is standalone, escapes title and crops to artwork including strokes
+  ---
+  duration_ms: 0.703083
+  ...
+# Subtest: curve bounds include handles outside vertex bounds and smooth reflected handles
+ok 23 - curve bounds include handles outside vertex bounds and smooth reflected handles
+  ---
+  duration_ms: 0.302583
+  ...
+# Subtest: spline export preserves smoothed path, forced unfilled style and round caps
+ok 24 - spline export preserves smoothed path, forced unfilled style and round caps
+  ---
+  duration_ms: 0.189042
+  ...
+# Subtest: empty rendering and zero-size paths stay finite; empty export uses document canvas
+ok 25 - empty rendering and zero-size paths stay finite; empty export uses document canvas
+  ---
+  duration_ms: 0.184958
+  ...
+# Subtest: de Casteljau splitting preserves every sampled point on the original curve and is saveable
+ok 26 - de Casteljau splitting preserves every sampled point on the original curve and is saveable
+  ---
+  duration_ms: 8.756042
+  ...
+# Subtest: true cubic extrema update bounds after control-handle and anchor edits
+ok 27 - true cubic extrema update bounds after control-handle and anchor edits
+  ---
+  duration_ms: 0.165834
+  ...
+# Subtest: transforms include compound contours and clipping geometry while preserving image source
+ok 28 - transforms include compound contours and clipping geometry while preserving image source
+  ---
+  duration_ms: 0.412833
+  ...
+# Subtest: multiple selection scales centers, curves and masks around a shared center
+ok 29 - multiple selection scales centers, curves and masks around a shared center
+  ---
+  duration_ms: 0.393625
+  ...
+# Subtest: vertex delete, smoothing, straightening and closure preserve valid document invariants
+ok 30 - vertex delete, smoothing, straightening and closure preserve valid document invariants
+  ---
+  duration_ms: 1.3595
+  ...
+# Subtest: splitting closing cubic segment is valid and does not change its contour
+ok 31 - splitting closing cubic segment is valid and does not change its contour
+  ---
+  duration_ms: 0.284
+  ...
+# Subtest: pencil conversion preserves existing smoothing; iterative RDP retains endpoints and turns
+ok 32 - pencil conversion preserves existing smoothing; iterative RDP retains endpoints and turns
+  ---
+  duration_ms: 19.630416
+  ...
+# Subtest: snapping threshold is six screen pixels and exact alignments outrank nearby candidates
+ok 33 - snapping threshold is six screen pixels and exact alignments outrank nearby candidates
+  ---
+  duration_ms: 0.570875
+  ...
+# Subtest: deleting a cubic source repairs the newly adjacent control connection
+ok 34 - deleting a cubic source repairs the newly adjacent control connection
+  ---
+  duration_ms: 0.159417
+  ...
+# Subtest: zero-coordinate control handles participate in translation, rotation and resize without mutating source
+ok 35 - zero-coordinate control handles participate in translation, rotation and resize without mutating source
+  ---
+  duration_ms: 0.757333
+  ...
+# Subtest: horizontal and vertical paths can resize without non-finite geometry
+ok 36 - horizontal and vertical paths can resize without non-finite geometry
+  ---
+  duration_ms: 0.4185
+  ...
+# Subtest: rotated resizing scales in local object axes and keeps document center stable
+ok 37 - rotated resizing scales in local object axes and keeps document center stable
+  ---
+  duration_ms: 0.090042
+  ...
+# Subtest: vertex edits update local bounds after rotation and move control handles with their anchor
+ok 38 - vertex edits update local bounds after rotation and move control handles with their anchor
+  ---
+  duration_ms: 0.268125
+  ...
+# Subtest: layer order names match their action and boundaries never wrap around
+ok 39 - layer order names match their action and boundaries never wrap around
+  ---
+  duration_ms: 0.138292
+  ...
+# Subtest: empty geometry and a large path return finite bounds
+ok 40 - empty geometry and a large path return finite bounds
+  ---
+  duration_ms: 51.017167
+  ...
+# Subtest: renderers safely skip empty paths and render flat paths with a positive viewport
+ok 41 - renderers safely skip empty paths and render flat paths with a positive viewport
+  ---
+  duration_ms: 3.249125
+  ...
+# Subtest: each completed edit can be undone and redone; branching clears redo
+ok 42 - each completed edit can be undone and redone; branching clears redo
+  ---
+  duration_ms: 0.485542
+  ...
+# Subtest: hundreds of gesture updates create exactly one undo entry
+ok 43 - hundreds of gesture updates create exactly one undo entry
+  ---
+  duration_ms: 0.377709
+  ...
+# Subtest: no-op edits and gestures returning to their origin preserve undo/redo
+ok 44 - no-op edits and gestures returning to their origin preserve undo/redo
+  ---
+  duration_ms: 0.076542
+  ...
+# Subtest: canceled gestures restore the pre-gesture document and preserve redo
+ok 45 - canceled gestures restore the pre-gesture document and preserve redo
+  ---
+  duration_ms: 0.053167
+  ...
+# Subtest: undo during a gesture resolves it without stale history
+ok 46 - undo during a gesture resolves it without stale history
+  ---
+  duration_ms: 0.149625
+  ...
+# Subtest: replacing a document resets history and an active gesture
+ok 47 - replacing a document resets history and an active gesture
+  ---
+  duration_ms: 0.312333
+  ...
+# Subtest: history memory is bounded and retained entries stay undoable
+ok 48 - history memory is bounded and retained entries stay undoable
+  ---
+  duration_ms: 2.705458
+  ...
+# Subtest: text layout retains Korean, blank lines and line breaks with measured spacing
+ok 49 - text layout retains Korean, blank lines and line breaks with measured spacing
+  ---
+  duration_ms: 1.442209
+  ...
+# Subtest: new text has editable rectangle geometry and no presentation fields inside text metadata
+ok 50 - new text has editable rectangle geometry and no presentation fields inside text metadata
+  ---
+  duration_ms: 1.165458
+  ...
+# Subtest: editing text preserves rotated origin and existing object scale
+ok 51 - editing text preserves rotated origin and existing object scale
+  ---
+  duration_ms: 0.861875
+  ...
+# Subtest: image crop and reset preserve original data, scale and rotated anchor
+ok 52 - image crop and reset preserve original data, scale and rotated anchor
+  ---
+  duration_ms: 0.303541
+  ...
+# Subtest: media reflow preserves reflection and transforms a clip together with its frame
+ok 53 - media reflow preserves reflection and transforms a clip together with its frame
+  ---
+  duration_ms: 0.212708
+  ...
+# Subtest: crop bounds cannot escape source and presets produce correct source aspect
+ok 54 - crop bounds cannot escape source and presets produce correct source aspect
+  ---
+  duration_ms: 0.096333
+  ...
+# Subtest: image import rejects unsupported types and excessive bytes before browser decode
+ok 55 - image import rejects unsupported types and excessive bytes before browser decode
+  ---
+  duration_ms: 0.302709
+  ...
+# Subtest: atomic document insertion selects new IDs only after validation succeeds
+ok 56 - atomic document insertion selects new IDs only after validation succeeds
+  ---
+  duration_ms: 2.144042
+  ...
+# Subtest: an asynchronous insertion during a drag commits separately and stale pointer cleanup cannot undo it
+ok 57 - an asynchronous insertion during a drag commits separately and stale pointer cleanup cannot undo it
+  ---
+  duration_ms: 0.233125
+  ...
+# Subtest: style updates keep the existing gesture transaction and selection until committed
+ok 58 - style updates keep the existing gesture transaction and selection until committed
+  ---
+  duration_ms: 2.10375
+  ...
+# Subtest: clipboard remains shared across hook instances and pastes advance by 24 document pixels
+ok 59 - clipboard remains shared across hook instances and pastes advance by 24 document pixels
+  ---
+  duration_ms: 0.94625
+  ...
+# Subtest: undo and redo preserve surviving selection for continued property editing
+ok 60 - undo and redo preserve surviving selection for continued property editing
+  ---
+  duration_ms: 0.261125
+  ...
+# Subtest: history filters removed and locked objects, while replacing a document clears selection
+ok 61 - history filters removed and locked objects, while replacing a document clears selection
+  ---
+  duration_ms: 0.431167
+  ...
+# Subtest: single-selection compatibility never exposes an arbitrary member of a multiple selection
+ok 62 - single-selection compatibility never exposes an arbitrary member of a multiple selection
+  ---
+  duration_ms: 5.087334
+  ...
+# Subtest: legacy drawing edits retain selection on rejection and prune only unavailable IDs on accepted changes
+ok 63 - legacy drawing edits retain selection on rejection and prune only unavailable IDs on accepted changes
+  ---
+  duration_ms: 3.447416
+  ...
+# Subtest: nested group selection resolves in stacking order and excludes hidden/locked objects
+ok 64 - nested group selection resolves in stacking order and excludes hidden/locked objects
+  ---
+  duration_ms: 1.401541
+  ...
+# Subtest: grouping preserves existing nested groups and ungrouping removes just the outer level
+ok 65 - grouping preserves existing nested groups and ungrouping removes just the outer level
+  ---
+  duration_ms: 1.656666
+  ...
+# Subtest: deleting selected group contents prunes orphan ancestors while protecting locked content
+ok 66 - deleting selected group contents prunes orphan ancestors while protecting locked content
+  ---
+  duration_ms: 0.146209
+  ...
+# Subtest: grouping a subset of siblings creates a nested group at their highest selected slot
+ok 67 - grouping a subset of siblings creates a nested group at their highest selected slot
+  ---
+  duration_ms: 0.316542
+  ...
+# Subtest: nonadjacent selection becomes one layer block while retaining selection order
+ok 68 - nonadjacent selection becomes one layer block while retaining selection order
+  ---
+  duration_ms: 0.350209
+  ...
+# Subtest: grouping cannot extract accessible siblings across a protected ancestor boundary
+ok 69 - grouping cannot extract accessible siblings across a protected ancestor boundary
+  ---
+  duration_ms: 0.40375
+  ...
+# Subtest: grouping across editable branches keeps every remaining ancestor contiguous
+ok 70 - grouping across editable branches keeps every remaining ancestor contiguous
+  ---
+  duration_ms: 2.056125
+  ...
+# Subtest: grouping an existing child group with a sibling retains their shared ancestor
+ok 71 - grouping an existing child group with a sibling retains their shared ancestor
+  ---
+  duration_ms: 0.416458
+  ...
+# Subtest: raising a full group crosses the next sibling group as one contiguous unit
+ok 72 - raising a full group crosses the next sibling group as one contiguous unit
+  ---
+  duration_ms: 0.659583
+  ...
+# Subtest: a partial group selection moves only among siblings and cannot escape its parent
+ok 73 - a partial group selection moves only among siblings and cannot escape its parent
+  ---
+  duration_ms: 0.242375
+  ...
+# Subtest: nested group reorder selects the highest complete group but keeps partial branches inside their ancestor
+ok 74 - nested group reorder selects the highest complete group but keeps partial branches inside their ancestor
+  ---
+  duration_ms: 0.282625
+  ...
+# Subtest: reordering multiple sibling units preserves selected order and protected groups remain partial
+ok 75 - reordering multiple sibling units preserves selected order and protected groups remain partial
+  ---
+  duration_ms: 0.138333
+  ...
+# Subtest: hierarchical stacking changes form one reversible document edit
+ok 76 - hierarchical stacking changes form one reversible document edit
+  ---
+  duration_ms: 0.354708
+  ...
+# Subtest: clipboard is a deep snapshot and paste remaps groups, all path IDs, masks and positions
+ok 77 - clipboard is a deep snapshot and paste remaps groups, all path IDs, masks and positions
+  ---
+  duration_ms: 0.580542
+  ...
+# Subtest: duplicate keeps the original and detached clipboard groups never refer to the source document
+ok 78 - duplicate keeps the original and detached clipboard groups never refer to the source document
+  ---
+  duration_ms: 0.357208
+  ...
+# Subtest: alignment moves complete groups as units without changing their internal spacing
+ok 79 - alignment moves complete groups as units without changing their internal spacing
+  ---
+  duration_ms: 0.771458
+  ...
+# Subtest: distribution equalizes gaps for differently sized objects and preserves the outer edges
+ok 80 - distribution equalizes gaps for differently sized objects and preserves the outer edges
+  ---
+  duration_ms: 0.515292
+  ...
+# Subtest: a multi-object style change is one validated undo step and never changes locked objects
+ok 81 - a multi-object style change is one validated undo step and never changes locked objects
+  ---
+  duration_ms: 0.55125
+  ...
+# Subtest: zoom keeps the document point under the pointer fixed through pan and zoom
+ok 82 - zoom keeps the document point under the pointer fixed through pan and zoom
+  ---
+  duration_ms: 0.134666
+  ...
+# Subtest: fit view centers negative-coordinate documents and handles flat bounds
+ok 83 - fit view centers negative-coordinate documents and handles flat bounds
+  ---
+  duration_ms: 0.079166
+  ...
+# Subtest: numeric transform edits use rotated local axes and leave unedited dimensions stable
+ok 84 - numeric transform edits use rotated local axes and leave unedited dimensions stable
+  ---
+  duration_ms: 1.851083
+  ...
+# Subtest: raising and lowering a selection preserves stacking order and stops at boundaries
+ok 85 - raising and lowering a selection preserves stacking order and stops at boundaries
+  ---
+  duration_ms: 0.378791
+  ...
+# Subtest: nested layer groups include descendants without selecting sibling groups
+ok 86 - nested layer groups include descendants without selecting sibling groups
+  ---
+  duration_ms: 0.215625
+  ...
+# Subtest: clipping consumes only the top closed shape, preserves contours and undoes atomically
+ok 87 - clipping consumes only the top closed shape, preserves contours and undoes atomically
+  ---
+  duration_ms: 1.461833
+  ...
+# Subtest: masking rejects an open or unavailable top shape and requires another object
+ok 88 - masking rejects an open or unavailable top shape and requires another object
+  ---
+  duration_ms: 0.161208
+  ...
+# Subtest: consuming a mask source removes its now-empty group without disturbing target groups
+ok 89 - consuming a mask source removes its now-empty group without disturbing target groups
+  ---
+  duration_ms: 0.2315
+  ...
+# Subtest: removing an artboard detaches its objects and preserves their content and placement
+ok 90 - removing an artboard detaches its objects and preserves their content and placement
+  ---
+  duration_ms: 0.220917
+  ...
+# Subtest: boolean operations perform geometry and survive editable document round trips
+ok 91 - boolean operations perform geometry and survive editable document round trips
+  ---
+  duration_ms: 42.831583
+  ...
+# Subtest: subtraction preserves compound holes and cubic intersections retain curve controls
+ok 92 - subtraction preserves compound holes and cubic intersections retain curve controls
+  ---
+  duration_ms: 4.625542
+  ...
+# Subtest: shape operations reject unsupported objects and preserve unrelated layer ordering
+ok 93 - shape operations reject unsupported objects and preserve unrelated layer ordering
+  ---
+  duration_ms: 1.855333
+  ...
+# Subtest: SVG transforms compose in SVG order, and grouped imports build valid documents
+ok 94 - SVG transforms compose in SVG order, and grouped imports build valid documents
+  ---
+  duration_ms: 1.0005
+  ...
+# Subtest: React export escapes text and braces, converts SVG attributes and emits valid TSX
+ok 95 - React export escapes text and braces, converts SVG attributes and emits valid TSX
+  ---
+  duration_ms: 7.435208
+  ...
+# Subtest: React gradient exports scope references separately for each rendered component instance
+ok 96 - React gradient exports scope references separately for each rendered component instance
+  ---
+  duration_ms: 22.757667
+  ...
+1..96
+# tests 96
+# suites 0
+# pass 96
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1826.072084

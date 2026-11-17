@@ -7,9 +7,9 @@ import { useEditorActions } from '@/editor/useEditorActions'
 import { useViewport } from './useViewport'
 import { translateDrawing } from '@/utils/drawingGeometry'
 import { getViewBounds } from '@/editor/viewBounds'
+import { isTextInput } from '@/editor/keyboard'
 
-export const isTextInput = (target: EventTarget | null) =>
-  target instanceof HTMLElement && Boolean(target.closest('input, textarea, select, [contenteditable="true"]'))
+export { isTextInput } from '@/editor/keyboard'
 
 export function useEditorKeyboard() {
   const [spacePressed, setSpacePressed] = useState(false)

@@ -270,6 +270,12 @@ function primitive(scope: paper.PaperScope, element: Element): paper.PathItem | 
   }
 }
 
+/** Reject oversized files before reading their contents, for every import entry point. */
+export async function importSvgFile(file: File): Promise<Drawing[]> {
+  if (file.size > MAX_DOCUMENT_BYTES) throw new Error('SVG files must be smaller than 10 MB.')
+  return importSvg(await file.text())
+}
+
 /** Imports a deliberately explicit vector subset, with no DOM injection or external fetching. */
 export async function importSvg(text: string): Promise<Drawing[]> {
   validateSvgSource(text)

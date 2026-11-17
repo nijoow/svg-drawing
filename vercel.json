@@ -2,7 +2,8 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "git": {
     "deploymentEnabled": {
-      "recovery/production-20261022": false
+      "recovery/production-20261022": false,
+      "codex/editor-ux-followup-20261022": false
     }
   }
 }

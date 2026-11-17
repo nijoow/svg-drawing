@@ -1,0 +1,38 @@
+- info Creating an optimized production build...
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+Browserslist: caniuse-lite is outdated. Please run:
+  npx browserslist@latest --update-db
+  Why you should do it regularly: https://github.com/browserslist/browserslist#browsers-data-updating
+- info Compiled successfully
+- info Linting and checking validity of types...
+- info Collecting page data...
+- info Generating static pages (0/4)
+- info Generating static pages (1/4)
+- info Generating static pages (2/4)
+- info Generating static pages (3/4)
+- info Generating static pages (4/4)
+- info Finalizing page optimization...
+
+Route (app)                                Size     First Load JS
+┌ ○ /                                      0 B                0 B
+└ ○ /favicon.ico                           0 B                0 B
++ First Load JS shared by all              103 kB
+  ├ chunks/59-53a075c0d620d734.js          25.2 kB
+  ├ chunks/805f4a9b-1d3badfcc84bd10a.js    2.43 kB
+  ├ chunks/ba531998-5d687fcddb9ea1a0.js    23.2 kB
+  ├ chunks/f86f9105-e325073081bea0e3.js    50.6 kB
+  ├ chunks/main-app-469fb1fc91e88775.js    216 B
+  └ chunks/webpack-d2510d4eb67d9808.js     1.82 kB
+
+Route (pages)                              Size     First Load JS
+─ ○ /404                                   181 B          75.1 kB
++ First Load JS shared by all              74.9 kB
+  ├ chunks/framework-60495875934ad84e.js   45 kB
+  ├ chunks/main-e78d64358032f61f.js        27.9 kB
+  ├ chunks/pages/_app-fd82b5ec34412ceb.js  194 B
+  └ chunks/webpack-d2510d4eb67d9808.js     1.82 kB
+
+○  (Static)  automatically rendered as static HTML (uses no initial props)
+

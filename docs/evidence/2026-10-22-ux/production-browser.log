@@ -1,0 +1,10 @@
+page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://nijoow-drawing.vercel.app/
+Call log:
+[2m  - navigating to "https://nijoow-drawing.vercel.app/", waiting until "load"[22m
+
+    at /workspace/svg-drawing/scripts/verify-editor-ux.cjs:47:16 {
+  log: [
+    '  - navigating to "https://nijoow-drawing.vercel.app/", waiting until "load"'
+  ],
+  name: 'Error'
+}

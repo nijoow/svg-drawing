@@ -68,7 +68,7 @@ export default function ArtboardsPanel() {
     }))
   }
   return (
-    <section aria-label="Artboards panel" className="space-y-4 text-white">
+    <section aria-label="Artboard controls" className="space-y-4 text-white">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-medium">Artboards</h2>
         <span className="text-xs text-gray-300">{document.artboards.length}</span>
