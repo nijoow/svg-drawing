@@ -16,14 +16,14 @@
 
 ## 단축키
 
-| 키 | 기능 |
-| --- | --- |
-| `V` | 도형 선택 |
-| `A` | 정점 편집 |
-| `N` | 자유 드로잉 |
-| `P` | 정점 기반 경로 그리기 |
-| `Enter` | 열린 경로 완성 |
-| `Escape` | 경로 그리기 취소 |
+| 키       | 기능                  |
+| -------- | --------------------- |
+| `V`      | 도형 선택             |
+| `A`      | 정점 편집             |
+| `N`      | 자유 드로잉           |
+| `P`      | 정점 기반 경로 그리기 |
+| `Enter`  | 열린 경로 완성        |
+| `Escape` | 경로 그리기 취소      |
 
 ## 구현 방식
 
@@ -34,13 +34,15 @@
 
 ## 기술 스택
 
-- Next.js 13.4.7, React 18.2.0, TypeScript 5.1.3
-- Recoil 0.7.7, Tailwind CSS 3.3.2, react-color 2.19.3
+- Next.js 16, React 19, TypeScript 6
+- Jotai, Tailwind CSS 4, Color
 
 ## 실행
 
+Node.js 24 LTS 및 Yarn 4를 사용합니다.
+
 ```sh
 corepack enable
-yarn install
+yarn install --immutable
 yarn dev
 ```

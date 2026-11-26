@@ -1,18 +1,12 @@
-import { drawingsAtom, selectedDrawingIdAtom, selectedDrawingState } from '@/recoil/atoms'
-import { Vertex } from '@/types/type'
-import React, { useEffect, useRef, useState } from 'react'
-import { useRecoilState, useRecoilValue } from 'recoil'
+import { drawingsAtom } from '@/state/drawing'
+import { Drawing, Vertex } from '@/types/type'
+import React, { useRef, useState } from 'react'
+import { useSetAtom } from 'jotai'
 import { rotateVertex } from '@/utils/rotateVertex'
 import usePointDrag from '@/hooks/usePointDrag'
 
-const VertexHandler = () => {
-  // recoil
-  const [selectedDrawingId] = useRecoilState(selectedDrawingIdAtom)
-  const [, setDrawings] = useRecoilState(drawingsAtom)
-  const selectedDrawing = useRecoilValue(selectedDrawingState)
-
-  if (!selectedDrawing) return null
-
+const VertexHandler = ({ drawing: selectedDrawing }: { drawing: Drawing }) => {
+  const setDrawings = useSetAtom(drawingsAtom)
   // custom hooks
   const { point, isDragged, onDrag, offDrag, prevRef, setStartPoint, resetPoint } = usePointDrag()
 
@@ -26,34 +20,25 @@ const VertexHandler = () => {
   const lastIndex = selectedDrawing.vertexs.length - 1
   const selectedVertex = selectedDrawing.vertexs.find((vertex) => vertex.id === selectedVertexId)
 
-  // useEffect
-  useEffect(() => {
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup', handleMouseUp)
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleMouseUp)
-    }
-  }, [selectedDrawing])
-
-  // function
-  const handleMouseDown = (event: React.MouseEvent, vertex: Vertex) => {
+  const handlePointerDown = (event: React.PointerEvent, vertex: Vertex) => {
+    if (!event.isPrimary || event.button !== 0) return
     event.stopPropagation()
+    event.currentTarget.setPointerCapture(event.pointerId)
     setSelectedVertexId(vertex.id)
     prevRef.current.vertexs = selectedDrawing.vertexs
     onDrag()
     setStartPoint(event)
   }
 
-  const handleMouseMove = (event: React.MouseEvent | MouseEvent) => {
+  const handlePointerMove = (event: React.PointerEvent) => {
+    if (!event.isPrimary) return
     event.stopPropagation()
-    if (!isDragged.current || !point.current.startX || !point.current.startY) return
+    if (!isDragged.current || point.current.startX === undefined || point.current.startY === undefined) return
 
     const horizontalChange = event.clientX - point.current.startX
     const verticalChange = event.clientY - point.current.startY
 
-    const nextVertexs = prevRef.current.vertexs.map((vertex, index) => {
+    const nextVertexs = prevRef.current.vertexs.map((vertex) => {
       if (vertex.id !== selectedVertexId) return vertex
 
       const newVertex = { ...vertex }
@@ -114,7 +99,7 @@ const VertexHandler = () => {
 
     setDrawings((drawings) =>
       drawings.map((drawing) =>
-        drawing.id === selectedDrawingId
+        drawing.id === selectedDrawing.id
           ? {
               ...drawing,
               width: nextWidth,
@@ -127,7 +112,8 @@ const VertexHandler = () => {
     )
   }
 
-  const handleMouseUp = (event: React.MouseEvent | MouseEvent) => {
+  const handlePointerUp = (event: React.PointerEvent) => {
+    if (!event.isPrimary) return
     event.stopPropagation()
     document.body.style.cursor = 'auto'
     offDrag()
@@ -137,11 +123,10 @@ const VertexHandler = () => {
   return (
     <>
       <svg
-        viewBox={`0 0 ${window.innerWidth} ${window.innerHeight}`}
-        width={window.innerWidth}
-        height={window.innerHeight}
-        tabIndex={0}
-        className="absolute top-0 left-0"
+        className="canvas-overlay pointer-events-none"
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
       >
         {selectedDrawing.vertexs.length > 1 && (
           <path
@@ -160,7 +145,7 @@ const VertexHandler = () => {
                 .join(' ') +
               (selectedDrawing.type === 'POLYGON' ? ' Z' : '')
             }
-            className="stroke-blue-400"
+            className="stroke-violet-500"
             fill="none"
             strokeWidth={2}
             strokeLinejoin="round"
@@ -171,14 +156,14 @@ const VertexHandler = () => {
           <>
             <path
               d={`M ${selectedVertex.x} ${selectedVertex.y} L ${selectedVertex.currentHandlerX} ${selectedVertex.currentHandlerY}`}
-              className="stroke-blue-400"
+              className="stroke-violet-500"
               fill="none"
               strokeWidth={2}
               strokeLinejoin="round"
             />
             <path
               d={`M ${selectedVertex.x} ${selectedVertex.y} L ${selectedVertex.nextHandlerX} ${selectedVertex.nextHandlerY}`}
-              className="stroke-blue-400"
+              className="stroke-violet-500"
               fill="none"
               strokeWidth={2}
               strokeLinejoin="round"
@@ -187,44 +172,44 @@ const VertexHandler = () => {
               id={selectedVertex.id}
               cx={selectedVertex.currentHandlerX}
               cy={selectedVertex.currentHandlerY}
-              r="4"
+              r="5"
               fill={'white'}
               strokeWidth={2}
-              className={`stroke-red-400 cursor-pointer`}
-              onMouseDown={(event) => {
+              className={`stroke-red-400 cursor-pointer pointer-events-auto`}
+              onPointerDown={(event) => {
                 targetHandlerRef.current = 'CURRENT'
-                handleMouseDown(event, selectedVertex)
+                handlePointerDown(event, selectedVertex)
               }}
             />
             <circle
               id={selectedVertex.id}
               cx={selectedVertex.nextHandlerX}
               cy={selectedVertex.nextHandlerY}
-              r="4"
+              r="5"
               fill={'white'}
               strokeWidth={2}
-              className={`stroke-red-400 cursor-pointer`}
-              onMouseDown={(event) => {
+              className={`stroke-red-400 cursor-pointer pointer-events-auto`}
+              onPointerDown={(event) => {
                 targetHandlerRef.current = 'NEXT'
-                handleMouseDown(event, selectedVertex)
+                handlePointerDown(event, selectedVertex)
               }}
             />
           </>
         )}
         {selectedDrawing.type !== 'SPLINE' &&
-          selectedDrawing.vertexs.map((vertex: Vertex, index: number) => (
+          selectedDrawing.vertexs.map((vertex: Vertex) => (
             <circle
               key={vertex.id}
               id={vertex.id}
               cx={vertex.x}
               cy={vertex.y}
-              r="4"
+              r="5"
               fill={'white'}
               strokeWidth={2}
-              className={`cursor-pointer stroke-blue-400`}
-              onMouseDown={(event) => {
+              className={`cursor-pointer pointer-events-auto stroke-violet-500`}
+              onPointerDown={(event) => {
                 targetHandlerRef.current = 'VERTEX'
-                handleMouseDown(event, vertex)
+                handlePointerDown(event, vertex)
               }}
             />
           ))}

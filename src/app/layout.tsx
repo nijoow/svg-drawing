@@ -1,33 +1,17 @@
 import './globals.css'
-import { Inter } from 'next/font/google'
-import Recoil from '@/contexts/recoil'
-import SplashScreen from '@/components/SplashScreen/SplashScreen'
-
-const inter = Inter({ subsets: ['latin'] })
+import { Provider } from 'jotai'
+import { appName } from '@/appName'
 
 export const metadata = {
-  title: 'Nijoow Drawing',
-  description: 'SVG Drawing App',
+  title: appName,
+  description: '도형과 자유선을 그리고 편집하는 SVG 드로잉 도구',
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="w-full h-full">
-      <head>
-        <link
-          rel="preconnect"
-          href="https://fonts.googleapis.com/css?family=Montserrat"
-        />
-      </head>
-      <body className={`${inter.className} overflow-hidden w-full h-full`}>
-        <Recoil>
-          <SplashScreen />
-          {children}
-        </Recoil>
+    <html lang="ko" className="w-full h-full">
+      <body className="overflow-hidden w-full h-full">
+        <Provider>{children}</Provider>
       </body>
     </html>
   )
