@@ -5,14 +5,16 @@ const Path = ({ drawing }: { drawing: Drawing }) => {
   const left = drawing.center.x - drawing.width / 2
   const top = drawing.center.y - drawing.height / 2
 
+  const width = Math.max(drawing.width, 1)
+  const height = Math.max(drawing.height, 1)
   const lastIndex = drawing.vertexs.length - 1
 
   return (
     <svg
       id={drawing.id}
-      viewBox={`${left} ${top} ${drawing.width} ${drawing.height}`}
-      width={drawing.width}
-      height={drawing.height}
+      viewBox={`${left} ${top} ${width} ${height}`}
+      width={width}
+      height={height}
       overflow={'visible'}
       className={`absolute`}
       style={{

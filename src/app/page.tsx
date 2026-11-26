@@ -1,19 +1,23 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
-import { useRecoilState, useRecoilValue } from 'recoil'
+import { IoShapesOutline } from 'react-icons/io5'
+import { FiPlus } from 'react-icons/fi'
+import React, { useCallback, useRef, useState } from 'react'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import {
   currentOptionsState,
   drawingsAtom,
   modeAtom,
   selectedDrawingIdAtom,
   selectedDrawingState,
-} from '@/recoil/atoms'
+} from '@/state/drawing'
 import SideToolBar from '@/components/ToolBar/SideToolBar'
-import { Drawing, DrawingType, ModeType, Point, Vertex } from '@/types/type'
+import { Drawing, DrawingType, Mode, Point, Vertex } from '@/types/type'
 import { v4 as uuid } from 'uuid'
 import { getHeightFromPoint, getLeftFromPoint, getTopFromPoint, getWidthFromPoint } from '@/utils/getValueFromPoint'
 import TopToolBar from '@/components/ToolBar/TopToolBar'
+import { DrawingMenu } from '@/components/ToolBar/DrawingActions'
+import { translateDrawing } from '@/utils/translateDrawing'
 import Handler from '@/components/Handler/Handler'
 import { getInformationFromVertexs } from '@/utils/getInformationFromVertex'
 import Path from '@/components/Drawings/Path'
@@ -28,114 +32,162 @@ const defaultPoint = {
   endY: undefined,
 }
 
-const dragBoxVisibleMode: Array<ModeType | null> = ['SELECT', 'SHAPE', 'VERTEX', 'TEXT']
-
 export default function Home() {
-  //recoil
-  const [mode, setMode] = useRecoilState(modeAtom)
-  const currentOptions = useRecoilValue(currentOptionsState)
-  const [, setSelectedDrawingId] = useRecoilState(selectedDrawingIdAtom)
-  const [drawings, setDrawings] = useRecoilState(drawingsAtom)
-  const selectedDrawing = useRecoilValue(selectedDrawingState)
+  const [mode, setMode] = useAtom(modeAtom)
+  const currentOptions = useAtomValue(currentOptionsState)
+  const setSelectedDrawingId = useSetAtom(selectedDrawingIdAtom)
+  const [drawings, setDrawings] = useAtom(drawingsAtom)
+  const selectedDrawing = useAtomValue(selectedDrawingState)
 
   //useState
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
+  const closeMenu = useCallback(() => setMenu(null), [])
+  const [grid, setGrid] = useState(true)
   const [point, setPoint] = useState<Point>(defaultPoint)
   const [vertexs, setVertexs] = useState<Vertex[]>([])
   const [spline, setSpline] = useState<Vertex[]>([])
 
   //useRef
+  const move = useRef<{ drawing: Drawing; x: number; y: number } | null>(null)
   const isDragged = useRef(false)
 
   //constant
   const vertexsLastIndex = vertexs.length - 1
 
-  // useEffect
-  useEffect(() => {
-    if (mode.type !== 'VERTEX') {
-      setVertexs([])
-    }
-  }, [mode])
+  const changeMode = useCallback(
+    (next: Mode) => {
+      move.current = null
+      isDragged.current = false
+      setSpline([])
+      setPoint(defaultPoint)
+      if (next.type !== 'VERTEX') setVertexs([])
+      setMode(next)
+    },
+    [setMode],
+  )
 
   //function
-  const handleMouseDown = (event: React.MouseEvent) => {
-    if (!selectedDrawing?.id && event.target instanceof SVGElement) {
-      setSelectedDrawingId(event.target.id)
-    } else {
-      setSelectedDrawingId(null)
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!event.isPrimary || event.button !== 0) return
+    if (mode.type === 'SELECT') {
+      const id = event.target instanceof SVGElement ? event.target.closest('svg[id]')?.id : null
+      setSelectedDrawingId(id ?? null)
+      const drawing = drawings.find((item) => item.id === id)
+      if (drawing && mode.subType === 'SHAPE') {
+        event.currentTarget.setPointerCapture(event.pointerId)
+        move.current = { drawing, x: event.clientX, y: event.clientY }
+      }
+      return
     }
+    if (mode.type !== 'SHAPE') return
+    event.currentTarget.setPointerCapture(event.pointerId)
     isDragged.current = true
-    setPoint({ ...point, startX: event.clientX, startY: event.clientY })
+    setPoint({ ...defaultPoint, startX: event.clientX, startY: event.clientY })
   }
 
-  const handleMouseMove = (event: React.MouseEvent | MouseEvent) => {
+  const handlePointerMove = (event: React.PointerEvent) => {
+    if (!event.isPrimary) return
+    const start = move.current
+    if (start) {
+      const moved = translateDrawing(start.drawing, event.clientX - start.x, event.clientY - start.y)
+      setDrawings((items) =>
+        items.map((item) => (item.id === moved.id ? { ...item, center: moved.center, vertexs: moved.vertexs } : item)),
+      )
+      return
+    }
     if (!isDragged.current) return
-    setPoint({
-      ...point,
-      endX: event.clientX,
-      endY: event.clientY,
-    })
+    setPoint({ ...point, endX: event.clientX, endY: event.clientY })
   }
 
-  const handleMouseUp = (event: React.MouseEvent | MouseEvent) => {
-    if (!isDragged.current) return
-
+  const cancelDrag = () => {
+    const start = move.current
+    if (start) {
+      setDrawings((items) =>
+        items.map((item) =>
+          item.id === start.drawing.id
+            ? { ...item, center: start.drawing.center, vertexs: start.drawing.vertexs }
+            : item,
+        ),
+      )
+      move.current = null
+    }
     isDragged.current = false
-    if (mode.type === 'SHAPE' && mode.subType && point.startX && point.startY && point.endX && point.endY) {
-      const centerX = (point.startX + point.endX) / 2
-      const centerY = (point.startY + point.endY) / 2
-      const width = Math.abs(point.endX - point.startX)
-      const height = Math.abs(point.endY - point.startY)
+    setPoint(defaultPoint)
+    setSpline([])
+  }
+
+  const handlePointerUp = (event: React.PointerEvent) => {
+    if (!event.isPrimary) return
+    move.current = null
+    if (!isDragged.current) return
+    isDragged.current = false
+    if (
+      mode.type === 'SHAPE' &&
+      mode.subType &&
+      point.startX !== undefined &&
+      point.startY !== undefined &&
+      event.clientX !== point.startX &&
+      event.clientY !== point.startY
+    ) {
+      const left = Math.min(point.startX, event.clientX)
+      const right = Math.max(point.startX, event.clientX)
+      const top = Math.min(point.startY, event.clientY)
+      const bottom = Math.max(point.startY, event.clientY)
+      const centerX = (left + right) / 2
+      const centerY = (top + bottom) / 2
+      const width = right - left
+      const height = bottom - top
       const shapeVertexs: { [key: string]: Vertex[] } = {
         RECTANGLE: [
-          { type: 'L', x: point.startX, y: point.startY, id: uuid() },
-          { type: 'L', x: point.startX, y: point.endY, id: uuid() },
-          { type: 'L', x: point.endX, y: point.endY, id: uuid() },
-          { type: 'L', x: point.endX, y: point.startY, id: uuid() },
+          { type: 'L', x: left, y: top, id: uuid() },
+          { type: 'L', x: left, y: bottom, id: uuid() },
+          { type: 'L', x: right, y: bottom, id: uuid() },
+          { type: 'L', x: right, y: top, id: uuid() },
         ],
         TRIANGLE: [
-          { type: 'L', x: centerX, y: point.startY, id: uuid() },
-          { type: 'L', x: point.startX, y: point.endY, id: uuid() },
-          { type: 'L', x: point.endX, y: point.endY, id: uuid() },
+          { type: 'L', x: centerX, y: top, id: uuid() },
+          { type: 'L', x: left, y: bottom, id: uuid() },
+          { type: 'L', x: right, y: bottom, id: uuid() },
         ],
         ELLIPSE: [
           {
             type: 'C',
-            currentHandlerX: point.startX,
-            currentHandlerY: point.startY + height / 4,
-            nextHandlerX: point.startX,
-            nextHandlerY: point.endY - height / 4,
-            x: point.startX,
+            currentHandlerX: left,
+            currentHandlerY: top + height / 4,
+            nextHandlerX: left,
+            nextHandlerY: bottom - height / 4,
+            x: left,
             y: centerY,
             id: uuid(),
           },
           {
             type: 'C',
-            currentHandlerX: point.startX + width / 4,
-            currentHandlerY: point.endY,
-            nextHandlerX: point.endX - width / 4,
-            nextHandlerY: point.endY,
+            currentHandlerX: left + width / 4,
+            currentHandlerY: bottom,
+            nextHandlerX: right - width / 4,
+            nextHandlerY: bottom,
             x: centerX,
-            y: point.endY,
+            y: bottom,
             id: uuid(),
           },
           {
             type: 'C',
-            currentHandlerX: point.endX,
-            currentHandlerY: point.endY - height / 4,
-            nextHandlerX: point.endX,
-            nextHandlerY: point.startY + height / 4,
-            x: point.endX,
+            currentHandlerX: right,
+            currentHandlerY: bottom - height / 4,
+            nextHandlerX: right,
+            nextHandlerY: top + height / 4,
+            x: right,
             y: centerY,
             id: uuid(),
           },
           {
             type: 'C',
-            currentHandlerX: point.endX - width / 4,
-            currentHandlerY: point.startY,
-            nextHandlerX: point.startX + width / 4,
-            nextHandlerY: point.startY,
+            currentHandlerX: right - width / 4,
+            currentHandlerY: top,
+            nextHandlerX: left + width / 4,
+            nextHandlerY: top,
             x: centerX,
-            y: point.startY,
+            y: top,
             id: uuid(),
           },
         ],
@@ -163,7 +215,7 @@ export default function Home() {
           opacity: currentOptions.opacity,
         },
       ])
-      setMode({ type: 'SELECT', subType: 'SHAPE' })
+      changeMode({ type: 'SELECT', subType: 'SHAPE' })
       setSelectedDrawingId(newId)
     }
 
@@ -174,7 +226,7 @@ export default function Home() {
     if (mode.type === 'VERTEX') {
       if (event.key === 'Escape') {
         setVertexs([])
-        setMode({ type: 'SELECT', subType: 'SHAPE' })
+        changeMode({ type: 'SELECT', subType: 'SHAPE' })
       }
       if (event.key === 'Enter') {
         addDrawingByVertexs('PATH')
@@ -183,17 +235,26 @@ export default function Home() {
   }
 
   const handleContextMenu = (event: React.MouseEvent) => {
+    if (mode.type !== 'SELECT' || !(event.target instanceof SVGElement)) return
+    const id = event.target.closest('.canvas-paper > svg[id]')?.id
+    if (!id) return
     event.preventDefault()
+    setSelectedDrawingId(id)
+    setMenu({ x: event.clientX, y: event.clientY })
   }
 
-  const handleMouseDownSvg = (event: React.MouseEvent) => {
-    if (event.buttons === 2) {
-      return setMode({ type: 'SELECT', subType: null })
+  const handlePenDown = (event: React.PointerEvent<SVGSVGElement>) => {
+    if (!event.isPrimary) return
+    event.currentTarget.focus()
+    if (event.button === 2) {
+      return changeMode({ type: 'SELECT', subType: 'SHAPE' })
     }
+    if (event.button !== 0) return
     setVertexs([...vertexs, { type: vertexs.length === 0 ? 'M' : 'L', x: event.clientX, y: event.clientY, id: uuid() }])
   }
 
-  const handleMouseDownVertex = (event: React.MouseEvent, index: number) => {
+  const handleVertexDown = (event: React.PointerEvent, index: number) => {
+    if (!event.isPrimary || event.button !== 0) return
     event.stopPropagation()
     if (index === 0) {
       addDrawingByVertexs('POLYGON')
@@ -201,6 +262,7 @@ export default function Home() {
   }
 
   const addDrawingByVertexs = (type: 'PATH' | 'POLYGON') => {
+    if (vertexs.length < (type === 'POLYGON' ? 3 : 2)) return
     const { width, height, center } = getInformationFromVertexs(vertexs)
     const newId = uuid()
 
@@ -222,22 +284,28 @@ export default function Home() {
       },
     ])
     setVertexs([])
-    setMode({ type: 'SELECT', subType: 'SHAPE' })
+    changeMode({ type: 'SELECT', subType: 'SHAPE' })
     setSelectedDrawingId(newId)
   }
 
   return (
-    <main className="w-full h-full" onContextMenu={handleContextMenu}>
-      <TopToolBar />
-      <SideToolBar />
+    <main aria-label="그림 편집기" className="workspace" onContextMenu={handleContextMenu}>
+      <TopToolBar grid={grid} toggleGrid={() => setGrid((enabled) => !enabled)} />
+      <SideToolBar
+        mode={mode}
+        changeMode={changeMode}
+        penPoints={vertexs.length}
+        finishPath={() => addDrawingByVertexs('PATH')}
+      />
       <div
-        className="z-0 w-full h-full bg-white"
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        aria-label="그리기 캔버스"
+        className={'canvas-paper' + (grid ? ' with-grid' : '') + (mode.type === 'SHAPE' ? ' cursor-crosshair' : '')}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={cancelDrag}
       >
-        {drawings.map((drawing: Drawing, index: number) => {
+        {drawings.map((drawing: Drawing) => {
           switch (drawing.type) {
             case 'POLYGON':
             case 'PATH':
@@ -250,9 +318,26 @@ export default function Home() {
           }
         })}
       </div>
-      {isDragged.current && dragBoxVisibleMode.includes(mode.type) && (
+      {drawings.length === 0 && mode.type === 'SELECT' && (
+        <div className="canvas-empty">
+          <IoShapesOutline className="empty-icon" aria-hidden="true" />
+          <h2>빈 캔버스</h2>
+          <button
+            type="button"
+            className="tool-button"
+            onClick={() => changeMode({ type: 'SHAPE', subType: 'RECTANGLE' })}
+          >
+            <FiPlus aria-hidden="true" />
+            사각형 그리기
+          </button>
+        </div>
+      )}
+      {point.endX !== undefined && mode.type === 'SHAPE' && (
         <div
-          className="absolute border border-blue-500"
+          className={
+            'absolute border border-dashed border-violet-600 bg-violet-500/5' +
+            (mode.subType === 'ELLIPSE' ? ' rounded-full' : '')
+          }
           style={{
             left: getLeftFromPoint(point),
             top: getTopFromPoint(point),
@@ -264,13 +349,11 @@ export default function Home() {
       )}
       {mode.type === 'VERTEX' && (
         <svg
-          viewBox={`0 0 ${window.innerWidth} ${window.innerHeight}`}
-          width={window.innerWidth}
-          height={window.innerHeight}
           tabIndex={0}
-          onMouseDown={(event) => handleMouseDownSvg(event)}
+          onPointerDown={handlePenDown}
+          aria-label="펜으로 그리기"
           onKeyDown={handleKeyDown}
-          className="absolute top-0 left-0"
+          className="canvas-overlay cursor-crosshair"
         >
           {vertexs.length > 1 && (
             <path
@@ -294,7 +377,7 @@ export default function Home() {
               opacity={currentOptions.opacity}
               strokeLinejoin="round"
               strokeLinecap="round"
-              className="stroke-blue-400 stroke-4"
+              className="stroke-violet-500 stroke-4"
             />
           )}
           {vertexs.map((vertex, index) => (
@@ -306,28 +389,34 @@ export default function Home() {
               r="4"
               fill={'white'}
               strokeWidth={2}
-              className={`${index === 0 ? 'stroke-red-400' : 'stroke-blue-400'}`}
+              className={`${index === 0 ? 'stroke-red-400' : 'stroke-violet-500'}`}
               style={{ cursor: 'pointer' }}
-              onMouseDown={(event) => handleMouseDownVertex(event, index)}
+              onPointerDown={(event) => handleVertexDown(event, index)}
             />
           ))}
         </svg>
       )}
       {mode.type === 'PENCIL' && (
         <svg
-          viewBox={`0 0 ${window.innerWidth} ${window.innerHeight}`}
-          width={window.innerWidth}
-          height={window.innerHeight}
           tabIndex={0}
-          onMouseDown={(event) => {
+          aria-label="연필로 그리기"
+          onPointerDown={(event) => {
+            if (!event.isPrimary || event.button !== 0) return
+            event.currentTarget.setPointerCapture(event.pointerId)
             isDragged.current = true
             setSpline([{ type: null, x: event.clientX, y: event.clientY, id: uuid() }])
           }}
-          onMouseMove={(event) => {
-            if (!isDragged.current) return
+          onPointerCancel={cancelDrag}
+          onPointerMove={(event) => {
+            if (!event.isPrimary || !isDragged.current) return
             setSpline((spline) => [...spline, { type: null, x: event.clientX, y: event.clientY, id: uuid() }])
           }}
-          onMouseUp={(event) => {
+          onPointerUp={(event) => {
+            if (!event.isPrimary || !isDragged.current) return
+            if (spline.length < 2) {
+              cancelDrag()
+              return
+            }
             const { center, width, height } = getSvgInformationFromPath(spline)
 
             setDrawings((drawings) => [
@@ -351,7 +440,7 @@ export default function Home() {
             isDragged.current = false
           }}
           onKeyDown={handleKeyDown}
-          className="absolute top-0 left-0 cursor-pencil"
+          className="canvas-overlay cursor-pencil"
         >
           <path
             d={spline.reduce(
@@ -367,8 +456,11 @@ export default function Home() {
           />
         </svg>
       )}
-      {selectedDrawing && mode.subType === 'SHAPE' && <Handler />}
-      {selectedDrawing && mode.subType === 'VERTEX' && <VertexHandler />}
+      {menu && selectedDrawing && <DrawingMenu {...menu} onClose={closeMenu} />}
+      {selectedDrawing && mode.subType === 'SHAPE' && <Handler key={selectedDrawing.id} drawing={selectedDrawing} />}
+      {selectedDrawing && mode.subType === 'VERTEX' && (
+        <VertexHandler key={selectedDrawing.id} drawing={selectedDrawing} />
+      )}
     </main>
   )
 }

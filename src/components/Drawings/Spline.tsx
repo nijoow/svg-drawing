@@ -7,10 +7,7 @@ const Spline = ({ drawing }: { drawing: Drawing }) => {
   const top = drawing.center.y - drawing.height / 2
 
   const d = drawing.vertexs.reduce(
-    (acc, point, i, a) =>
-      i === 0
-        ? `M ${point.x},${point.y}`
-        : `${acc} ${bezierCommand(point, i, a)}`,
+    (acc, point, i, a) => (i === 0 ? `M ${point.x},${point.y}` : `${acc} ${bezierCommand(point, i, a)}`),
     '',
   )
   return (

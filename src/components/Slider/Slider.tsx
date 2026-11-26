@@ -1,13 +1,13 @@
-import { useState, useRef } from 'react'
-
 const Slider = ({
+  label,
   value,
   setValue,
   option,
 }: {
+  label: string
   value: number
-  setValue: any
-  option?: any
+  setValue: (value: number) => void
+  option: { min: number; max: number; step: number }
 }) => {
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setValue(Number(event.target.value))
@@ -16,6 +16,7 @@ const Slider = ({
   return (
     <div className="flex items-center">
       <input
+        aria-label={label}
         type="range"
         value={value}
         onChange={handleChange}

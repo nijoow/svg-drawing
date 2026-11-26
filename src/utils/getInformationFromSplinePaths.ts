@@ -35,11 +35,7 @@ const controlPoint = (controlPoints: ControlPoints): [number, number] => {
   return [x, y]
 }
 
-export const bezierCommand = (
-  point: SplinePoint,
-  i: number,
-  a: SplinePoint[],
-): string => {
+export const bezierCommand = (point: SplinePoint, i: number, a: SplinePoint[]): string => {
   let cpsX: number
   let cpsY: number
 
