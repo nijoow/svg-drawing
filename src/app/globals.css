@@ -522,3 +522,24 @@ button:disabled {
   background: white;
   font-size: 13px;
 }
+.history-controls {
+  display: flex;
+  gap: 2px;
+  border-right: 1px solid var(--line);
+  padding-right: 6px;
+}
+@media (max-width: 640px) {
+  .history-controls {
+    position: fixed;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    left: var(--edge);
+    top: auto;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 2px;
+    background: white;
+  }
+  .dock-wrap {
+    bottom: max(68px, calc(env(safe-area-inset-bottom) + 54px));
+  }
+}

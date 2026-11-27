@@ -7,6 +7,7 @@ import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import {
   basicOptionsAtom,
   currentOptionsState,
+  gestureAtom,
   drawingsAtom,
   recentColorsAtom,
   modeAtom,
@@ -15,6 +16,7 @@ import {
 import type { Options } from '@/types/type'
 import { appName } from '@/appName'
 import ColorEditor from './ColorEditor'
+import HistoryControls from './HistoryControls'
 import DrawingActions from './DrawingActions'
 
 type ColorKey = 'fill' | 'stroke'
@@ -71,6 +73,7 @@ export default function TopToolBar({ grid, toggleGrid }: { grid: boolean; toggle
   const strokeOnly = mode.type === 'PENCIL' || selected?.type === 'SPLINE'
   const drawings = useAtomValue(drawingsAtom)
   const setDrawings = useSetAtom(drawingsAtom)
+  const gesture = useSetAtom(gestureAtom)
   const options = useAtomValue(currentOptionsState)
   const setBasic = useSetAtom(basicOptionsAtom)
   const [open, setOpen] = useState(false)
@@ -107,9 +110,24 @@ export default function TopToolBar({ grid, toggleGrid }: { grid: boolean; toggle
   }, [])
 
   function apply<K extends keyof Options>(key: K, value: Options[K]) {
+    if (options[key] === value) return
     if (selected)
       setDrawings((items) => items.map((item) => (item.id === selected.id ? { ...item, [key]: value } : item)))
     else setBasic((current) => ({ ...current, [key]: value }))
+  }
+
+  const sliderGesture = {
+    onPointerDown: (event: React.PointerEvent<HTMLInputElement>) => {
+      if (!selected || !event.isPrimary || event.button !== 0) return
+      event.currentTarget.setPointerCapture(event.pointerId)
+      gesture('begin')
+    },
+    onPointerUp: (event: React.PointerEvent) => {
+      if (event.isPrimary) gesture('finish')
+    },
+    onPointerCancel: (event: React.PointerEvent) => {
+      if (event.isPrimary) gesture('cancel')
+    },
   }
 
   function closeOnEscape(event: React.KeyboardEvent) {
@@ -135,6 +153,7 @@ export default function TopToolBar({ grid, toggleGrid }: { grid: boolean; toggle
           <span className="drawing-count">도형 {drawings.length}개</span>
         </div>
         <div className="header-actions">
+          <HistoryControls />
           <button type="button" className="tool-button" aria-pressed={grid} onClick={toggleGrid}>
             <FiGrid aria-hidden="true" />
             격자
@@ -203,6 +222,7 @@ export default function TopToolBar({ grid, toggleGrid }: { grid: boolean; toggle
             </span>
             <input
               type="range"
+              {...sliderGesture}
               aria-label="선 굵기"
               min="0"
               max="50"
@@ -216,6 +236,7 @@ export default function TopToolBar({ grid, toggleGrid }: { grid: boolean; toggle
             </span>
             <input
               type="range"
+              {...sliderGesture}
               aria-label="불투명도"
               min="1"
               max="100"
