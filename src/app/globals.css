@@ -510,3 +510,15 @@ button:disabled {
   width: 1px;
   background: var(--accent);
 }
+.storage-notice {
+  position: fixed;
+  z-index: 21;
+  top: 64px;
+  left: var(--edge);
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  font-size: 13px;
+}

@@ -1,5 +1,5 @@
 import { FiRotateCw } from 'react-icons/fi'
-import { drawingsAtom } from '@/state/drawing'
+import { drawingsAtom, gestureAtom } from '@/state/drawing'
 import { Direction, Drawing } from '@/types/type'
 import React, { useRef } from 'react'
 import { useSetAtom } from 'jotai'
@@ -19,6 +19,7 @@ const resizeHandler = [
 ]
 
 const Handler = ({ drawing: selectedDrawing }: { drawing: Drawing }) => {
+  const gesture = useSetAtom(gestureAtom)
   const setDrawings = useSetAtom(drawingsAtom)
   // custom hooks
   const { point, isDragged, onDrag, offDrag, prevRef, setStartPoint, resetPoint, resetPrev } = usePointDrag()
@@ -32,6 +33,7 @@ const Handler = ({ drawing: selectedDrawing }: { drawing: Drawing }) => {
     event.stopPropagation()
     event.currentTarget.setPointerCapture(event.pointerId)
     resetPrev()
+    gesture('begin')
     onDrag()
     setStartPoint(event)
 
@@ -262,6 +264,7 @@ const Handler = ({ drawing: selectedDrawing }: { drawing: Drawing }) => {
   const handlePointerUp = (event: React.PointerEvent) => {
     if (!event.isPrimary) return
     event.stopPropagation()
+    gesture(event.type === 'pointerup' ? 'finish' : 'cancel')
     document.body.style.cursor = 'auto'
 
     offDrag()

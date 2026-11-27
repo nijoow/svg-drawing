@@ -1,4 +1,4 @@
-import { drawingsAtom } from '@/state/drawing'
+import { drawingsAtom, gestureAtom } from '@/state/drawing'
 import { Drawing, Vertex } from '@/types/type'
 import React, { useRef, useState } from 'react'
 import { useSetAtom } from 'jotai'
@@ -6,6 +6,7 @@ import { rotateVertex } from '@/utils/rotateVertex'
 import usePointDrag from '@/hooks/usePointDrag'
 
 const VertexHandler = ({ drawing: selectedDrawing }: { drawing: Drawing }) => {
+  const gesture = useSetAtom(gestureAtom)
   const setDrawings = useSetAtom(drawingsAtom)
   // custom hooks
   const { point, isDragged, onDrag, offDrag, prevRef, setStartPoint, resetPoint } = usePointDrag()
@@ -26,6 +27,7 @@ const VertexHandler = ({ drawing: selectedDrawing }: { drawing: Drawing }) => {
     event.currentTarget.setPointerCapture(event.pointerId)
     setSelectedVertexId(vertex.id)
     prevRef.current.vertexs = selectedDrawing.vertexs
+    gesture('begin')
     onDrag()
     setStartPoint(event)
   }
@@ -115,6 +117,7 @@ const VertexHandler = ({ drawing: selectedDrawing }: { drawing: Drawing }) => {
   const handlePointerUp = (event: React.PointerEvent) => {
     if (!event.isPrimary) return
     event.stopPropagation()
+    gesture(event.type === 'pointerup' ? 'finish' : 'cancel')
     document.body.style.cursor = 'auto'
     offDrag()
     resetPoint()
