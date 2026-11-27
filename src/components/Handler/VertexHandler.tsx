@@ -2,125 +2,63 @@ import { drawingsAtom, gestureAtom } from '@/state/drawing'
 import { Drawing, Vertex } from '@/types/type'
 import React, { useRef, useState } from 'react'
 import { useSetAtom } from 'jotai'
-import { rotateVertex } from '@/utils/rotateVertex'
-import usePointDrag from '@/hooks/usePointDrag'
+import { pathBounds } from '@/utils/pathGeometry'
 
 const VertexHandler = ({ drawing: selectedDrawing }: { drawing: Drawing }) => {
   const gesture = useSetAtom(gestureAtom)
   const setDrawings = useSetAtom(drawingsAtom)
-  // custom hooks
-  const { point, isDragged, onDrag, offDrag, prevRef, setStartPoint, resetPoint } = usePointDrag()
-
-  // useState
   const [selectedVertexId, setSelectedVertexId] = useState<string | null>(null)
-
-  // uesRef
-  const targetHandlerRef = useRef<'VERTEX' | 'CURRENT' | 'NEXT' | null>(null)
-
-  //constant
+  const drag = useRef<{
+    drawing: Drawing
+    vertexId: string
+    target: 'VERTEX' | 'CURRENT' | 'NEXT'
+    x: number
+    y: number
+  } | null>(null)
   const lastIndex = selectedDrawing.vertexs.length - 1
   const selectedVertex = selectedDrawing.vertexs.find((vertex) => vertex.id === selectedVertexId)
 
-  const handlePointerDown = (event: React.PointerEvent, vertex: Vertex) => {
+  const handlePointerDown = (event: React.PointerEvent, vertex: Vertex, target: 'VERTEX' | 'CURRENT' | 'NEXT') => {
     if (!event.isPrimary || event.button !== 0) return
     event.stopPropagation()
     event.currentTarget.setPointerCapture(event.pointerId)
     setSelectedVertexId(vertex.id)
-    prevRef.current.vertexs = selectedDrawing.vertexs
+    drag.current = { drawing: selectedDrawing, vertexId: vertex.id, target, x: event.clientX, y: event.clientY }
     gesture('begin')
-    onDrag()
-    setStartPoint(event)
   }
 
   const handlePointerMove = (event: React.PointerEvent) => {
-    if (!event.isPrimary) return
-    event.stopPropagation()
-    if (!isDragged.current || point.current.startX === undefined || point.current.startY === undefined) return
-
-    const horizontalChange = event.clientX - point.current.startX
-    const verticalChange = event.clientY - point.current.startY
-
-    const nextVertexs = prevRef.current.vertexs.map((vertex) => {
-      if (vertex.id !== selectedVertexId) return vertex
-
-      const newVertex = { ...vertex }
-      switch (targetHandlerRef.current) {
-        case 'VERTEX':
-          for (const key in vertex) {
-            if (key === 'x' || key === 'currentHandlerX' || key === 'nextHandlerX') {
-              newVertex[key] = (vertex[key] as number) + horizontalChange
-            } else if (key === 'y' || key === 'currentHandlerY' || key === 'nextHandlerY') {
-              newVertex[key] = (vertex[key] as number) + verticalChange
-            }
-          }
-          break
-        case 'CURRENT':
-          newVertex.currentHandlerX = (vertex.currentHandlerX as number) + horizontalChange
-          newVertex.currentHandlerY = (vertex.currentHandlerY as number) + verticalChange
-          break
-        case 'NEXT':
-          newVertex.nextHandlerX = (vertex.nextHandlerX as number) + horizontalChange
-          newVertex.nextHandlerY = (vertex.nextHandlerY as number) + verticalChange
-          break
+    const start = drag.current
+    if (!event.isPrimary || !start) return
+    const dx = event.clientX - start.x,
+      dy = event.clientY - start.y
+    const vertices = start.drawing.vertexs.map((vertex) => {
+      if (vertex.id !== start.vertexId) return vertex
+      const next = { ...vertex }
+      if (start.target === 'VERTEX') {
+        next.x += dx
+        next.y += dy
       }
-      return newVertex
+      if (start.target !== 'NEXT' && next.currentHandlerX !== undefined && next.currentHandlerY !== undefined) {
+        next.currentHandlerX += dx
+        next.currentHandlerY += dy
+      }
+      if (start.target !== 'CURRENT' && next.nextHandlerX !== undefined && next.nextHandlerY !== undefined) {
+        next.nextHandlerX += dx
+        next.nextHandlerY += dy
+      }
+      return next
     })
-
-    const rotatedVertexMinMax = nextVertexs.reduce(
-      (acc, vertex) => {
-        const rotatedVertex = rotateVertex(
-          vertex.x,
-          vertex.y,
-          selectedDrawing.center.x,
-          selectedDrawing.center.y,
-          -selectedDrawing.rotate,
-        )
-        return {
-          ...acc,
-          minX: Math.min(acc.minX, rotatedVertex.x),
-          minY: Math.min(acc.minY, rotatedVertex.y),
-          maxX: Math.max(acc.maxX, rotatedVertex.x),
-          maxY: Math.max(acc.maxY, rotatedVertex.y),
-        }
-      },
-      { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity },
-    )
-
-    const rotatedVertexCenter = rotateVertex(
-      (rotatedVertexMinMax.maxX + rotatedVertexMinMax.minX) / 2,
-      (rotatedVertexMinMax.maxY + rotatedVertexMinMax.minY) / 2,
-      0,
-      0,
-      selectedDrawing.rotate,
-    )
-
-    const nextCenterX = rotatedVertexCenter.x + selectedDrawing.center.x
-    const nextCenterY = rotatedVertexCenter.y + selectedDrawing.center.y
-    const nextWidth = Math.abs(rotatedVertexMinMax.maxX - rotatedVertexMinMax.minX)
-    const nextHeight = Math.abs(rotatedVertexMinMax.maxY - rotatedVertexMinMax.minY)
-
-    setDrawings((drawings) =>
-      drawings.map((drawing) =>
-        drawing.id === selectedDrawing.id
-          ? {
-              ...drawing,
-              width: nextWidth,
-              height: nextHeight,
-              center: { x: nextCenterX, y: nextCenterY },
-              vertexs: nextVertexs,
-            }
-          : drawing,
-      ),
+    const bounds = pathBounds(start.drawing, vertices)
+    setDrawings((items) =>
+      items.map((item) => (item.id === start.drawing.id ? { ...item, ...bounds, vertexs: vertices } : item)),
     )
   }
 
-  const handlePointerUp = (event: React.PointerEvent) => {
-    if (!event.isPrimary) return
-    event.stopPropagation()
+  const endDrag = (event: React.PointerEvent) => {
+    if (!event.isPrimary || !drag.current) return
+    drag.current = null
     gesture(event.type === 'pointerup' ? 'finish' : 'cancel')
-    document.body.style.cursor = 'auto'
-    offDrag()
-    resetPoint()
   }
 
   return (
@@ -128,8 +66,9 @@ const VertexHandler = ({ drawing: selectedDrawing }: { drawing: Drawing }) => {
       <svg
         className="canvas-overlay pointer-events-none"
         onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onLostPointerCapture={endDrag}
       >
         {selectedDrawing.vertexs.length > 1 && (
           <path
@@ -179,10 +118,7 @@ const VertexHandler = ({ drawing: selectedDrawing }: { drawing: Drawing }) => {
               fill={'white'}
               strokeWidth={2}
               className={`stroke-red-400 cursor-pointer pointer-events-auto`}
-              onPointerDown={(event) => {
-                targetHandlerRef.current = 'CURRENT'
-                handlePointerDown(event, selectedVertex)
-              }}
+              onPointerDown={(event) => handlePointerDown(event, selectedVertex, 'CURRENT')}
             />
             <circle
               id={selectedVertex.id}
@@ -192,10 +128,7 @@ const VertexHandler = ({ drawing: selectedDrawing }: { drawing: Drawing }) => {
               fill={'white'}
               strokeWidth={2}
               className={`stroke-red-400 cursor-pointer pointer-events-auto`}
-              onPointerDown={(event) => {
-                targetHandlerRef.current = 'NEXT'
-                handlePointerDown(event, selectedVertex)
-              }}
+              onPointerDown={(event) => handlePointerDown(event, selectedVertex, 'NEXT')}
             />
           </>
         )}
@@ -210,10 +143,7 @@ const VertexHandler = ({ drawing: selectedDrawing }: { drawing: Drawing }) => {
               fill={'white'}
               strokeWidth={2}
               className={`cursor-pointer pointer-events-auto stroke-violet-500`}
-              onPointerDown={(event) => {
-                targetHandlerRef.current = 'VERTEX'
-                handlePointerDown(event, vertex)
-              }}
+              onPointerDown={(event) => handlePointerDown(event, vertex, 'VERTEX')}
             />
           ))}
       </svg>

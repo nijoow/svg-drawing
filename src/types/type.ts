@@ -48,14 +48,6 @@ export interface Vertex {
   id: string
 }
 
-export interface ShapeData {
-  width: number | null
-  height: number | null
-  center: { x: number | null; y: number | null }
-  rotate: number | null
-  vertexs: Vertex[]
-}
-
 export interface Drawing {
   id: string
   type: DrawingType
