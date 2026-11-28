@@ -1,5 +1,5 @@
 export type ModeType = 'SELECT' | 'PENCIL' | 'VERTEX' | 'SHAPE' | 'TEXT'
-type ModeSubType = 'SHAPE' | 'VERTEX' | 'RECTANGLE' | 'ELLIPSE' | 'TRIANGLE'
+type ModeSubType = 'INSERT' | 'SHAPE' | 'VERTEX' | 'RECTANGLE' | 'ELLIPSE' | 'TRIANGLE'
 type Option = 'FILL' | 'STROKE' | 'STORKE_WIDTH' | 'OPACITY' | null
 export type DrawingType = 'POLYGON' | 'PATH' | 'ELLIPSE' | 'SPLINE' | 'TEXT'
 
@@ -46,14 +46,6 @@ export interface Vertex {
   currentHandlerX?: number
   currentHandlerY?: number
   id: string
-}
-
-export interface ShapeData {
-  width: number | null
-  height: number | null
-  center: { x: number | null; y: number | null }
-  rotate: number | null
-  vertexs: Vertex[]
 }
 
 export interface Drawing {

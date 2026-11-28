@@ -1,5 +1,7 @@
-import { Drawing } from '@/types/type'
-import React from 'react'
+import { memo } from 'react'
+import type { Drawing } from '@/types/type'
+import { editableVertices } from '@/utils/getInformationFromSplinePaths'
+import { pathData } from '@/utils/pathGeometry'
 
 const Path = ({ drawing }: { drawing: Drawing }) => {
   const left = drawing.center.x - drawing.width / 2
@@ -7,7 +9,7 @@ const Path = ({ drawing }: { drawing: Drawing }) => {
 
   const width = Math.max(drawing.width, 1)
   const height = Math.max(drawing.height, 1)
-  const lastIndex = drawing.vertexs.length - 1
+  const pencil = drawing.type === 'SPLINE'
 
   return (
     <svg
@@ -23,23 +25,9 @@ const Path = ({ drawing }: { drawing: Drawing }) => {
       }}
     >
       <path
-        id={drawing.id}
-        d={
-          `M ${drawing.vertexs[lastIndex].x} ${drawing.vertexs[lastIndex].y} ` +
-          drawing.vertexs
-            .map((vertex, index, vertexs) => {
-              const prevVertex = index === 0 ? vertexs[lastIndex] : vertexs[index - 1]
-              return {
-                M: `M ${vertex.x} ${vertex.y}`,
-                L: `L ${vertex.x} ${vertex.y}`,
-                C: `C ${prevVertex.nextHandlerX} ${prevVertex.nextHandlerY}, ${vertex.currentHandlerX} ${vertex.currentHandlerY}, ${vertex.x} ${vertex.y}`,
-                S: `S ${vertex.currentHandlerX} ${vertex.currentHandlerY}, ${vertex.x} ${vertex.y}`,
-              }[vertex.type!]
-            })
-            .join(' ') +
-          (drawing.type === 'POLYGON' ? ' Z' : '')
-        }
-        fill={drawing.fill}
+        d={pathData(editableVertices(drawing), drawing.type === 'POLYGON')}
+        fill={pencil ? 'none' : drawing.fill}
+        strokeLinecap={pencil ? 'round' : undefined}
         stroke={drawing.stroke}
         strokeWidth={drawing.strokeWidth}
         opacity={drawing.opacity}
@@ -49,4 +37,4 @@ const Path = ({ drawing }: { drawing: Drawing }) => {
   )
 }
 
-export default Path
+export default memo(Path)

@@ -1,3 +1,5 @@
+import type { Drawing, Vertex } from '@/types/type'
+
 type SplinePoint = { x: number; y: number }
 
 type ControlPoints = {
@@ -35,38 +37,26 @@ const controlPoint = (controlPoints: ControlPoints): [number, number] => {
   return [x, y]
 }
 
-export const bezierCommand = (point: SplinePoint, i: number, a: SplinePoint[]): string => {
-  let cpsX: number
-  let cpsY: number
+function splineControls(points: SplinePoint[], i: number) {
+  const outgoing = controlPoint({ current: points[i - 1], previous: points[i - 2], next: points[i] })
+  const incoming = controlPoint({ current: points[i], previous: points[i - 1], next: points[i + 1] })
+  return { outgoing, incoming }
+}
 
-  switch (i) {
-    case 0:
-      ;[cpsX, cpsY] = controlPoint({
-        current: point,
-      })
-      break
-    case 1:
-      ;[cpsX, cpsY] = controlPoint({
-        current: a[i - 1],
-        next: point,
-      })
-      break
-    default:
-      ;[cpsX, cpsY] = controlPoint({
-        current: a[i - 1],
-        previous: a[i - 2],
-        next: point,
-      })
-      break
+export const bezierCommand = (point: SplinePoint, i: number, points: SplinePoint[]): string => {
+  const { outgoing, incoming } = splineControls(points, i)
+  return `C ${outgoing} ${incoming} ${point.x}, ${point.y}`
+}
+
+export function editableVertices(drawing: Drawing): Vertex[] {
+  if (drawing.type !== 'SPLINE' || drawing.vertexs[0].type !== null) return drawing.vertexs
+  const vertices = drawing.vertexs.map((point, i): Vertex => ({ ...point, type: i === 0 ? 'M' : 'C' }))
+  for (let i = 1; i < vertices.length; i++) {
+    const { outgoing, incoming } = splineControls(vertices, i)
+    ;[vertices[i - 1].nextHandlerX, vertices[i - 1].nextHandlerY] = outgoing
+    ;[vertices[i].currentHandlerX, vertices[i].currentHandlerY] = incoming
   }
-
-  const [cpeX, cpeY] = controlPoint({
-    current: point,
-    previous: a[i - 1],
-    next: a[i + 1],
-  })
-
-  return `C ${cpsX},${cpsY} ${cpeX},${cpeY} ${point.x}, ${point.y}`
+  return vertices
 }
 
 export const getSvgInformationFromPath = (paths: SplinePoint[]) => {

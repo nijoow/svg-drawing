@@ -6,6 +6,7 @@ import React, { useCallback, useRef, useState } from 'react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import {
   currentOptionsState,
+  gestureAtom,
   drawingsAtom,
   modeAtom,
   selectedDrawingIdAtom,
@@ -23,7 +24,8 @@ import { getInformationFromVertexs } from '@/utils/getInformationFromVertex'
 import Path from '@/components/Drawings/Path'
 import VertexHandler from '@/components/Handler/VertexHandler'
 import { bezierCommand, getSvgInformationFromPath } from '@/utils/getInformationFromSplinePaths'
-import Spline from '@/components/Drawings/Spline'
+import useCanvasStorage from '@/hooks/useCanvasStorage'
+import { pathData } from '@/utils/pathGeometry'
 
 const defaultPoint = {
   startX: undefined,
@@ -33,6 +35,8 @@ const defaultPoint = {
 }
 
 export default function Home() {
+  const storageNotice = useCanvasStorage()
+  const gesture = useSetAtom(gestureAtom)
   const [mode, setMode] = useAtom(modeAtom)
   const currentOptions = useAtomValue(currentOptionsState)
   const setSelectedDrawingId = useSetAtom(selectedDrawingIdAtom)
@@ -51,11 +55,9 @@ export default function Home() {
   const move = useRef<{ drawing: Drawing; x: number; y: number } | null>(null)
   const isDragged = useRef(false)
 
-  //constant
-  const vertexsLastIndex = vertexs.length - 1
-
   const changeMode = useCallback(
     (next: Mode) => {
+      gesture('cancel')
       move.current = null
       isDragged.current = false
       setSpline([])
@@ -63,7 +65,7 @@ export default function Home() {
       if (next.type !== 'VERTEX') setVertexs([])
       setMode(next)
     },
-    [setMode],
+    [gesture, setMode],
   )
 
   //function
@@ -75,6 +77,7 @@ export default function Home() {
       const drawing = drawings.find((item) => item.id === id)
       if (drawing && mode.subType === 'SHAPE') {
         event.currentTarget.setPointerCapture(event.pointerId)
+        gesture('begin')
         move.current = { drawing, x: event.clientX, y: event.clientY }
       }
       return
@@ -90,7 +93,7 @@ export default function Home() {
     const start = move.current
     if (start) {
       const moved = translateDrawing(start.drawing, event.clientX - start.x, event.clientY - start.y)
-      setDrawings((items) =>
+      gesture((items) =>
         items.map((item) => (item.id === moved.id ? { ...item, center: moved.center, vertexs: moved.vertexs } : item)),
       )
       return
@@ -100,17 +103,8 @@ export default function Home() {
   }
 
   const cancelDrag = () => {
-    const start = move.current
-    if (start) {
-      setDrawings((items) =>
-        items.map((item) =>
-          item.id === start.drawing.id
-            ? { ...item, center: start.drawing.center, vertexs: start.drawing.vertexs }
-            : item,
-        ),
-      )
-      move.current = null
-    }
+    gesture('cancel')
+    move.current = null
     isDragged.current = false
     setPoint(defaultPoint)
     setSpline([])
@@ -118,6 +112,7 @@ export default function Home() {
 
   const handlePointerUp = (event: React.PointerEvent) => {
     if (!event.isPrimary) return
+    if (move.current) gesture('finish')
     move.current = null
     if (!isDragged.current) return
     isDragged.current = false
@@ -290,6 +285,11 @@ export default function Home() {
 
   return (
     <main aria-label="그림 편집기" className="workspace" onContextMenu={handleContextMenu}>
+      {storageNotice && (
+        <p role="status" className="storage-notice">
+          {storageNotice}
+        </p>
+      )}
       <TopToolBar grid={grid} toggleGrid={() => setGrid((enabled) => !enabled)} />
       <SideToolBar
         mode={mode}
@@ -310,9 +310,8 @@ export default function Home() {
             case 'POLYGON':
             case 'PATH':
             case 'ELLIPSE':
-              return <Path key={drawing.id} drawing={drawing} />
             case 'SPLINE':
-              return <Spline key={drawing.id} drawing={drawing} />
+              return <Path key={drawing.id} drawing={drawing} />
             default:
               break
           }
@@ -357,20 +356,7 @@ export default function Home() {
         >
           {vertexs.length > 1 && (
             <path
-              d={
-                `M ${vertexs[vertexsLastIndex].x} ${vertexs[vertexsLastIndex].y}` +
-                vertexs
-                  .map((vertex, index, vertexs) => {
-                    const prevVertex = index === 0 ? vertexs[vertexsLastIndex] : vertexs[index - 1]
-                    return {
-                      M: `M ${vertex.x} ${vertex.y}`,
-                      L: `L ${vertex.x} ${vertex.y}`,
-                      C: `C ${prevVertex.nextHandlerX} ${prevVertex.nextHandlerY}, ${vertex.currentHandlerX} ${vertex.currentHandlerY}, ${vertex.x} ${vertex.y}`,
-                      S: `S ${vertex.currentHandlerX} ${vertex.currentHandlerY}, ${vertex.x} ${vertex.y}`,
-                    }[vertex.type!]
-                  })
-                  .join(' ')
-              }
+              d={pathData(vertexs)}
               fill={currentOptions.fill}
               stroke={currentOptions.stroke}
               strokeWidth={currentOptions.strokeWidth}
@@ -458,8 +444,13 @@ export default function Home() {
       )}
       {menu && selectedDrawing && <DrawingMenu {...menu} onClose={closeMenu} />}
       {selectedDrawing && mode.subType === 'SHAPE' && <Handler key={selectedDrawing.id} drawing={selectedDrawing} />}
-      {selectedDrawing && mode.subType === 'VERTEX' && (
-        <VertexHandler key={selectedDrawing.id} drawing={selectedDrawing} />
+      {selectedDrawing && (mode.subType === 'VERTEX' || mode.subType === 'INSERT') && (
+        <VertexHandler
+          key={selectedDrawing.id}
+          drawing={selectedDrawing}
+          inserting={mode.subType === 'INSERT'}
+          finishInsert={() => changeMode({ type: 'SELECT', subType: 'VERTEX' })}
+        />
       )}
     </main>
   )
