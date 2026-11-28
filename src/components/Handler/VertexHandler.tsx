@@ -1,10 +1,50 @@
 import { drawingsAtom, gestureAtom } from '@/state/drawing'
 import { Drawing, Vertex } from '@/types/type'
-import React, { useRef, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import { useSetAtom } from 'jotai'
-import { pathBounds } from '@/utils/pathGeometry'
+import { pathBounds, pathData, pathSegments, segmentData, type Segment } from '@/utils/pathGeometry'
+import { nearestParameter, splitSegment } from '@/utils/insertVertex'
+import { editableVertices } from '@/utils/getInformationFromSplinePaths'
+import { v4 as uuid } from 'uuid'
 
-const VertexHandler = ({ drawing: selectedDrawing }: { drawing: Drawing }) => {
+type Handle = 'CURRENT' | 'NEXT'
+function ControlHandle({
+  vertex,
+  target,
+  onDown,
+}: {
+  vertex: Vertex
+  target: Handle
+  onDown: (event: React.PointerEvent, vertex: Vertex, target: Handle) => void
+}) {
+  const x = target === 'CURRENT' ? vertex.currentHandlerX : vertex.nextHandlerX
+  const y = target === 'CURRENT' ? vertex.currentHandlerY : vertex.nextHandlerY
+  if (x === undefined || y === undefined) return null
+  return (
+    <g>
+      <line x1={vertex.x} y1={vertex.y} x2={x} y2={y} className="stroke-violet-500" />
+      <circle
+        cx={x}
+        cy={y}
+        r={5}
+        fill="white"
+        strokeWidth={2}
+        className="stroke-red-400 cursor-pointer pointer-events-auto"
+        onPointerDown={(event) => onDown(event, vertex, target)}
+      />
+    </g>
+  )
+}
+
+const VertexHandler = ({
+  drawing: selectedDrawing,
+  inserting,
+  finishInsert,
+}: {
+  drawing: Drawing
+  inserting: boolean
+  finishInsert: () => void
+}) => {
   const gesture = useSetAtom(gestureAtom)
   const setDrawings = useSetAtom(drawingsAtom)
   const [selectedVertexId, setSelectedVertexId] = useState<string | null>(null)
@@ -15,15 +55,36 @@ const VertexHandler = ({ drawing: selectedDrawing }: { drawing: Drawing }) => {
     x: number
     y: number
   } | null>(null)
-  const lastIndex = selectedDrawing.vertexs.length - 1
-  const selectedVertex = selectedDrawing.vertexs.find((vertex) => vertex.id === selectedVertexId)
+  const vertices = useMemo(() => editableVertices(selectedDrawing), [selectedDrawing])
+  const polygon = selectedDrawing.type === 'POLYGON'
+  const selectedVertex = vertices.find((v) => v.id === selectedVertexId)
+
+  function insert(segment: Segment, t: number) {
+    const id = uuid()
+    const next = splitSegment(vertices, polygon, segment, t, id)
+    if (next === vertices) return
+    setDrawings((items) =>
+      items.map((item) =>
+        item.id === selectedDrawing.id ? { ...item, ...pathBounds(item, next), vertexs: next } : item,
+      ),
+    )
+    setSelectedVertexId(id)
+    finishInsert()
+  }
 
   const handlePointerDown = (event: React.PointerEvent, vertex: Vertex, target: 'VERTEX' | 'CURRENT' | 'NEXT') => {
     if (!event.isPrimary || event.button !== 0) return
+    event.preventDefault()
     event.stopPropagation()
     event.currentTarget.setPointerCapture(event.pointerId)
     setSelectedVertexId(vertex.id)
-    drag.current = { drawing: selectedDrawing, vertexId: vertex.id, target, x: event.clientX, y: event.clientY }
+    drag.current = {
+      drawing: { ...selectedDrawing, vertexs: vertices },
+      vertexId: vertex.id,
+      target,
+      x: event.clientX,
+      y: event.clientY,
+    }
     gesture('begin')
   }
 
@@ -50,7 +111,7 @@ const VertexHandler = ({ drawing: selectedDrawing }: { drawing: Drawing }) => {
       return next
     })
     const bounds = pathBounds(start.drawing, vertices)
-    setDrawings((items) =>
+    gesture((items) =>
       items.map((item) => (item.id === start.drawing.id ? { ...item, ...bounds, vertexs: vertices } : item)),
     )
   }
@@ -70,82 +131,56 @@ const VertexHandler = ({ drawing: selectedDrawing }: { drawing: Drawing }) => {
         onPointerCancel={endDrag}
         onLostPointerCapture={endDrag}
       >
-        {selectedDrawing.vertexs.length > 1 && (
-          <path
-            d={
-              `M ${selectedDrawing.vertexs[lastIndex].x} ${selectedDrawing.vertexs[lastIndex].y}` +
-              selectedDrawing.vertexs
-                .map((vertex, index, vertexs) => {
-                  const prevVertex = index === 0 ? selectedDrawing.vertexs[vertexs.length - 1] : vertexs[index - 1]
-                  return {
-                    M: `M ${vertex.x} ${vertex.y}`,
-                    L: `L ${vertex.x} ${vertex.y}`,
-                    C: `C ${prevVertex.nextHandlerX} ${prevVertex.nextHandlerY}, ${vertex.currentHandlerX} ${vertex.currentHandlerY}, ${vertex.x} ${vertex.y}`,
-                    S: `S ${vertex.currentHandlerX} ${vertex.currentHandlerY}, ${vertex.x} ${vertex.y}`,
-                  }[vertex.type!]
-                })
-                .join(' ') +
-              (selectedDrawing.type === 'POLYGON' ? ' Z' : '')
-            }
-            className="stroke-violet-500"
-            fill="none"
-            strokeWidth={2}
-            strokeLinejoin="round"
-          />
-        )}
-
-        {selectedVertex?.type === 'C' && (
+        <path
+          d={pathData(vertices, polygon)}
+          className="stroke-violet-500"
+          fill="none"
+          strokeWidth={2}
+          strokeLinejoin="round"
+        />
+        {inserting ? (
+          pathSegments(vertices, polygon).map((segment, i) => (
+            <path
+              key={i}
+              d={segmentData(segment)}
+              role="button"
+              tabIndex={0}
+              aria-label={`${i + 1}번째 선분에 점 추가`}
+              className="insert-segment"
+              fill="none"
+              stroke="transparent"
+              strokeWidth={24}
+              onClick={(event) => insert(segment, nearestParameter(segment, { x: event.clientX, y: event.clientY }))}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  insert(segment, 0.5)
+                }
+              }}
+            />
+          ))
+        ) : (
           <>
-            <path
-              d={`M ${selectedVertex.x} ${selectedVertex.y} L ${selectedVertex.currentHandlerX} ${selectedVertex.currentHandlerY}`}
-              className="stroke-violet-500"
-              fill="none"
-              strokeWidth={2}
-              strokeLinejoin="round"
-            />
-            <path
-              d={`M ${selectedVertex.x} ${selectedVertex.y} L ${selectedVertex.nextHandlerX} ${selectedVertex.nextHandlerY}`}
-              className="stroke-violet-500"
-              fill="none"
-              strokeWidth={2}
-              strokeLinejoin="round"
-            />
-            <circle
-              id={selectedVertex.id}
-              cx={selectedVertex.currentHandlerX}
-              cy={selectedVertex.currentHandlerY}
-              r="5"
-              fill={'white'}
-              strokeWidth={2}
-              className={`stroke-red-400 cursor-pointer pointer-events-auto`}
-              onPointerDown={(event) => handlePointerDown(event, selectedVertex, 'CURRENT')}
-            />
-            <circle
-              id={selectedVertex.id}
-              cx={selectedVertex.nextHandlerX}
-              cy={selectedVertex.nextHandlerY}
-              r="5"
-              fill={'white'}
-              strokeWidth={2}
-              className={`stroke-red-400 cursor-pointer pointer-events-auto`}
-              onPointerDown={(event) => handlePointerDown(event, selectedVertex, 'NEXT')}
-            />
+            {selectedVertex && (
+              <>
+                <ControlHandle vertex={selectedVertex} target="CURRENT" onDown={handlePointerDown} />
+                <ControlHandle vertex={selectedVertex} target="NEXT" onDown={handlePointerDown} />
+              </>
+            )}
+            {vertices.map((vertex) => (
+              <circle
+                key={vertex.id}
+                cx={vertex.x}
+                cy={vertex.y}
+                r={5}
+                fill={vertex.id === selectedVertexId ? 'var(--tint)' : 'white'}
+                strokeWidth={2}
+                className="vertex-point cursor-pointer pointer-events-auto stroke-violet-500"
+                onPointerDown={(event) => handlePointerDown(event, vertex, 'VERTEX')}
+              />
+            ))}
           </>
         )}
-        {selectedDrawing.type !== 'SPLINE' &&
-          selectedDrawing.vertexs.map((vertex: Vertex) => (
-            <circle
-              key={vertex.id}
-              id={vertex.id}
-              cx={vertex.x}
-              cy={vertex.y}
-              r="5"
-              fill={'white'}
-              strokeWidth={2}
-              className={`cursor-pointer pointer-events-auto stroke-violet-500`}
-              onPointerDown={(event) => handlePointerDown(event, vertex, 'VERTEX')}
-            />
-          ))}
       </svg>
     </>
   )

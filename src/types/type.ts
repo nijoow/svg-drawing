@@ -1,5 +1,5 @@
 export type ModeType = 'SELECT' | 'PENCIL' | 'VERTEX' | 'SHAPE' | 'TEXT'
-type ModeSubType = 'SHAPE' | 'VERTEX' | 'RECTANGLE' | 'ELLIPSE' | 'TRIANGLE'
+type ModeSubType = 'INSERT' | 'SHAPE' | 'VERTEX' | 'RECTANGLE' | 'ELLIPSE' | 'TRIANGLE'
 type Option = 'FILL' | 'STROKE' | 'STORKE_WIDTH' | 'OPACITY' | null
 export type DrawingType = 'POLYGON' | 'PATH' | 'ELLIPSE' | 'SPLINE' | 'TEXT'
 

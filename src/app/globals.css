@@ -152,6 +152,11 @@ button:disabled {
   background-size: 20px 20px;
   background-position: 9px 9px;
 }
+.canvas-paper,
+.canvas-overlay,
+.selection-box {
+  user-select: none;
+}
 .canvas-overlay {
   position: absolute;
   inset: 0;
@@ -541,5 +546,18 @@ button:disabled {
   }
   .dock-wrap {
     bottom: max(68px, calc(env(safe-area-inset-bottom) + 54px));
+  }
+}
+.insert-segment {
+  pointer-events: stroke;
+  cursor: crosshair;
+}
+.insert-segment:focus-visible {
+  stroke: #5542ae40;
+  outline: none;
+}
+@media (pointer: coarse) {
+  .vertex-point {
+    r: 8px;
   }
 }

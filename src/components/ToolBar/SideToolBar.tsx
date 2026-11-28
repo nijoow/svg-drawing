@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { FiCircle, FiEdit2, FiMousePointer, FiPenTool, FiSquare, FiTriangle } from 'react-icons/fi'
 import { IoShapesOutline } from 'react-icons/io5'
 import { TbVectorBezier } from 'react-icons/tb'
-import { useSetAtom } from 'jotai'
+import { useAtom } from 'jotai'
 import { selectedDrawingIdAtom } from '@/state/drawing'
 import type { Mode } from '@/types/type'
 
@@ -31,7 +31,7 @@ export default function SideToolBar({
   penPoints: number
   finishPath: () => void
 }) {
-  const setSelected = useSetAtom(selectedDrawingIdAtom)
+  const [selected, setSelected] = useAtom(selectedDrawingIdAtom)
   const [shapesOpen, setShapesOpen] = useState(false)
   const bar = useRef<HTMLDivElement>(null)
   const trigger = useRef<HTMLButtonElement>(null)
@@ -62,6 +62,10 @@ export default function SideToolBar({
           (event.target.isContentEditable || event.target.closest('input, textarea, select')))
       )
         return
+      if (event.key === 'Escape') {
+        changeMode(mode.type === 'SELECT' && mode.subType !== 'SHAPE' ? tools[1].mode : tools[0].mode)
+        return
+      }
       const tool = tools.find(({ key, koreanKey }) => key === event.key.toLowerCase() || koreanKey === event.key)
       if (tool) {
         if (tool.mode.type !== 'SELECT') setSelected(null)
@@ -75,7 +79,7 @@ export default function SideToolBar({
       window.removeEventListener('pointerdown', closeOutside)
       window.removeEventListener('keydown', onKey)
     }
-  }, [changeMode, setSelected, shapesOpen])
+  }, [changeMode, mode.subType, mode.type, setSelected, shapesOpen])
 
   return (
     <div ref={bar} className="dock-wrap">
@@ -96,6 +100,25 @@ export default function SideToolBar({
           )}
         </div>
       )}
+      {!shapesOpen &&
+        selected &&
+        mode.type === 'SELECT' &&
+        (mode.subType === 'VERTEX' || mode.subType === 'INSERT') && (
+          <div className="tool-hint">
+            {mode.subType === 'INSERT' ? (
+              <>
+                <span>새 점을 놓을 선 위를 누르세요</span>
+                <button type="button" onClick={() => choose(tools[1].mode)}>
+                  취소
+                </button>
+              </>
+            ) : (
+              <button type="button" onClick={() => choose({ type: 'SELECT', subType: 'INSERT' })}>
+                점 추가
+              </button>
+            )}
+          </div>
+        )}
       <div role="group" aria-label="그리기 도구" className="tool-panel tool-dock">
         {tools.map(({ name, key, icon: Icon, mode: toolMode }) => (
           <button
@@ -103,7 +126,10 @@ export default function SideToolBar({
             type="button"
             className="tool-button dock-button"
             title={name + ' (' + key.toUpperCase() + ')'}
-            aria-pressed={mode.type === toolMode.type && mode.subType === toolMode.subType}
+            aria-pressed={
+              mode.type === toolMode.type &&
+              (mode.subType === toolMode.subType || (toolMode.subType === 'VERTEX' && mode.subType === 'INSERT'))
+            }
             onClick={() => choose(toolMode)}
           >
             <Icon aria-hidden="true" />

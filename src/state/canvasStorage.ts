@@ -46,8 +46,8 @@ function drawing(value: unknown): value is Drawing {
     new Set(points.map((v) => v.id)).size !== points.length
   )
     return false
+  if (value.type === 'SPLINE' && points[0].type === null) return points.every((v) => v.type === null)
   return points.every((v, i) => {
-    if (value.type === 'SPLINE') return v.type === null
     if (v.type === 'C' && points[(i + points.length - 1) % points.length].nextHandlerX === undefined) return false
     return v.type !== null && ((v.type !== 'C' && v.type !== 'S') || v.currentHandlerX !== undefined)
   })

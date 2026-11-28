@@ -43,16 +43,23 @@ export const drawingsAtom = atom(
     else set(commitAtom, next)
   },
 )
-export const gestureAtom = atom(null, (get, set, action: 'begin' | 'finish' | 'cancel') => {
-  const preview = get(previewAtom)
-  if (action === 'begin') {
-    if (preview === null) set(previewAtom, get(savedDrawingsAtom))
-    return
-  }
-  if (preview === null) return
-  if (action === 'finish') set(commitAtom, preview)
-  set(previewAtom, null)
-})
+export const gestureAtom = atom(
+  null,
+  (get, set, action: 'begin' | 'finish' | 'cancel' | ((items: Drawing[]) => Drawing[])) => {
+    const preview = get(previewAtom)
+    if (typeof action === 'function') {
+      if (preview !== null) set(previewAtom, action(preview))
+      return
+    }
+    if (action === 'begin') {
+      if (preview === null) set(previewAtom, get(savedDrawingsAtom))
+      return
+    }
+    if (preview === null) return
+    if (action === 'finish') set(commitAtom, preview)
+    set(previewAtom, null)
+  },
+)
 export const recentColorsAtom = atom<string[]>([])
 
 export const selectedDrawingState = atom((get) => {

@@ -52,5 +52,7 @@ test('selection survives undo when possible and cancelled gestures preserve redo
   store.set(gestureAtom, 'begin')
   store.set(drawingsAtom, [])
   store.set(gestureAtom, 'cancel')
+  store.set(gestureAtom, () => []) // A captured pointer can keep moving after Escape.
+  assert.deepEqual(store.get(drawingsAtom), [{ id: 'a' }])
   assert.equal(store.get(canRedoAtom), true)
 })

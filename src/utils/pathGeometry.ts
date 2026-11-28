@@ -42,6 +42,28 @@ export function pathSegments(vertices: Vertex[], polygon: boolean): Segment[] {
   return segments
 }
 
+export function pathData(vertices: Vertex[], polygon = false) {
+  if (!vertices.length) return ''
+  const last = vertices[vertices.length - 1]
+  const commands = vertices[0].type === 'M' ? [] : [`M ${last.x} ${last.y}`]
+  for (const [i, v] of vertices.entries()) {
+    const prev = vertices[i - 1] ?? last
+    if (v.type === 'C')
+      commands.push(
+        `C ${prev.nextHandlerX} ${prev.nextHandlerY} ${v.currentHandlerX} ${v.currentHandlerY} ${v.x} ${v.y}`,
+      )
+    else if (v.type === 'S') commands.push(`S ${v.currentHandlerX} ${v.currentHandlerY} ${v.x} ${v.y}`)
+    else commands.push(`${v.type} ${v.x} ${v.y}`)
+  }
+  if (polygon) commands.push('Z')
+  return commands.join(' ')
+}
+
+export function segmentData({ start, end, controls }: Segment) {
+  const command = controls ? `C ${controls[0].x} ${controls[0].y} ${controls[1].x} ${controls[1].y}` : 'L'
+  return `M ${start.x} ${start.y} ${command} ${end.x} ${end.y}`
+}
+
 export function pointOnSegment({ start, end, controls }: Segment, t: number): XY {
   const s = 1 - t
   if (!controls) return { x: s * start.x + t * end.x, y: s * start.y + t * end.y }

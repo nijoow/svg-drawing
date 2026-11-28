@@ -25,7 +25,7 @@ import Path from '@/components/Drawings/Path'
 import VertexHandler from '@/components/Handler/VertexHandler'
 import { bezierCommand, getSvgInformationFromPath } from '@/utils/getInformationFromSplinePaths'
 import useCanvasStorage from '@/hooks/useCanvasStorage'
-import Spline from '@/components/Drawings/Spline'
+import { pathData } from '@/utils/pathGeometry'
 
 const defaultPoint = {
   startX: undefined,
@@ -54,9 +54,6 @@ export default function Home() {
   //useRef
   const move = useRef<{ drawing: Drawing; x: number; y: number } | null>(null)
   const isDragged = useRef(false)
-
-  //constant
-  const vertexsLastIndex = vertexs.length - 1
 
   const changeMode = useCallback(
     (next: Mode) => {
@@ -96,7 +93,7 @@ export default function Home() {
     const start = move.current
     if (start) {
       const moved = translateDrawing(start.drawing, event.clientX - start.x, event.clientY - start.y)
-      setDrawings((items) =>
+      gesture((items) =>
         items.map((item) => (item.id === moved.id ? { ...item, center: moved.center, vertexs: moved.vertexs } : item)),
       )
       return
@@ -313,9 +310,8 @@ export default function Home() {
             case 'POLYGON':
             case 'PATH':
             case 'ELLIPSE':
-              return <Path key={drawing.id} drawing={drawing} />
             case 'SPLINE':
-              return <Spline key={drawing.id} drawing={drawing} />
+              return <Path key={drawing.id} drawing={drawing} />
             default:
               break
           }
@@ -360,20 +356,7 @@ export default function Home() {
         >
           {vertexs.length > 1 && (
             <path
-              d={
-                `M ${vertexs[vertexsLastIndex].x} ${vertexs[vertexsLastIndex].y}` +
-                vertexs
-                  .map((vertex, index, vertexs) => {
-                    const prevVertex = index === 0 ? vertexs[vertexsLastIndex] : vertexs[index - 1]
-                    return {
-                      M: `M ${vertex.x} ${vertex.y}`,
-                      L: `L ${vertex.x} ${vertex.y}`,
-                      C: `C ${prevVertex.nextHandlerX} ${prevVertex.nextHandlerY}, ${vertex.currentHandlerX} ${vertex.currentHandlerY}, ${vertex.x} ${vertex.y}`,
-                      S: `S ${vertex.currentHandlerX} ${vertex.currentHandlerY}, ${vertex.x} ${vertex.y}`,
-                    }[vertex.type!]
-                  })
-                  .join(' ')
-              }
+              d={pathData(vertexs)}
               fill={currentOptions.fill}
               stroke={currentOptions.stroke}
               strokeWidth={currentOptions.strokeWidth}
@@ -461,8 +444,13 @@ export default function Home() {
       )}
       {menu && selectedDrawing && <DrawingMenu {...menu} onClose={closeMenu} />}
       {selectedDrawing && mode.subType === 'SHAPE' && <Handler key={selectedDrawing.id} drawing={selectedDrawing} />}
-      {selectedDrawing && mode.subType === 'VERTEX' && (
-        <VertexHandler key={selectedDrawing.id} drawing={selectedDrawing} />
+      {selectedDrawing && (mode.subType === 'VERTEX' || mode.subType === 'INSERT') && (
+        <VertexHandler
+          key={selectedDrawing.id}
+          drawing={selectedDrawing}
+          inserting={mode.subType === 'INSERT'}
+          finishInsert={() => changeMode({ type: 'SELECT', subType: 'VERTEX' })}
+        />
       )}
     </main>
   )

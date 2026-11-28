@@ -1,5 +1,5 @@
 import { FiRotateCw } from 'react-icons/fi'
-import { drawingsAtom, gestureAtom } from '@/state/drawing'
+import { gestureAtom } from '@/state/drawing'
 import { Direction, Drawing } from '@/types/type'
 import React, { useRef } from 'react'
 import { useSetAtom } from 'jotai'
@@ -18,7 +18,6 @@ const resizeHandler = [
 
 const Handler = ({ drawing: selectedDrawing }: { drawing: Drawing }) => {
   const gesture = useSetAtom(gestureAtom)
-  const setDrawings = useSetAtom(drawingsAtom)
   const drag = useRef<{
     start: { x: number; y: number }
     drawing: Drawing
@@ -40,7 +39,7 @@ const Handler = ({ drawing: selectedDrawing }: { drawing: Drawing }) => {
       handle === 'rotate'
         ? rotateDrawing(drawing, start, { x: event.clientX, y: event.clientY })
         : resizeDrawing(drawing, handle, event.clientX - start.x, event.clientY - start.y)
-    setDrawings((items) => {
+    gesture((items) => {
       const index = items.findIndex((item) => item.id === drawing.id)
       return index === -1 || items[index] === next ? items : items.map((item, i) => (i === index ? next : item))
     })
